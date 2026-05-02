@@ -1,0 +1,14 @@
+digraph G {
+  rankdir=TB;
+  node [shape=box, style=filled, color=lightblue];
+
+  Developer -> "GitHub Repo";
+  "GitHub Repo" -> "Trigger Pipeline";
+  "Trigger Pipeline" -> "Build (Docker Image)";
+  "Build (Docker Image)" -> "Test (/health endpoint)";
+  "Test (/health endpoint)" -> "Notify (Pipeline Status)";
+  "Notify (Pipeline Status)" -> "Deliver (Docker Hub)";
+  "Deliver (Docker Hub)" -> "Deploy (EC2 via SSH)";
+  "Deploy (EC2 via SSH)" -> "Docker Container";
+  "Docker Container" -> "User Browser";
+}
