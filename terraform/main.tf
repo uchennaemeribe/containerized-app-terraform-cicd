@@ -1,31 +1,25 @@
+########################################
+# ☁️ AWS PROVIDER CONFIGURATION
+########################################
 provider "aws" {
   region = var.region
 }
 
-# 🔍 Dynamically fetch latest Ubuntu AMI
-data "aws_ami" "ubuntu" {
-  most_recent = true
-
-  owners = ["099720109477"]
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-}
-
-# 🔐 Key Pair
+########################################
+# 🔐 SSH KEY PAIR CREATION
+########################################
 resource "aws_key_pair" "key" {
   key_name   = "cicd-key"
-  public_key = file("~/.ssh/id_rsa.pub")
+  public_key = var.public_key
 }
 
-# 🔥 Security Group
+########################################
+# 🔒 SECURITY GROUP CONFIGURATION
+########################################
 resource "aws_security_group" "sg" {
   name = "cicd-sg"
 
   ingress {
-    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -33,9 +27,8 @@ resource "aws_security_group" "sg" {
   }
 
   ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
+    from_port   = 3000
+    to_port     = 3000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -48,22 +41,15 @@ resource "aws_security_group" "sg" {
   }
 }
 
-# 🚀 EC2 Instance
+########################################
+# 🖥️ EC2 INSTANCE CREATION
+########################################
 resource "aws_instance" "vm" {
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = "t3.micro"
-  key_name               = aws_key_pair.key.key_name
-  vpc_security_group_ids = [aws_security_group.sg.id]
-
-  # 🔥 Install Docker automatically
-  user_data = <<-EOF
-              #!/bin/bash
-              apt update -y
-              apt install docker.io -y
-              usermod -aG docker ubuntu
-              systemctl start docker
-              systemctl enable docker
-              EOF
+  ami                         = var.ami
+  instance_type               = "t3.micro"
+  key_name                    = aws_key_pair.key.key_name
+  vpc_security_group_ids      = [aws_security_group.sg.id]
+  associate_public_ip_address = true
 
   tags = {
     Name = "cicd-vm"

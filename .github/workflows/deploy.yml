@@ -1,130 +1,115 @@
 name: CI/CD Pipeline
 
-# ============================
-# 🔔 TRIGGER CONFIGURATION
-# ============================
 on:
   push:
     branches:
       - main
 
-# ============================
-# 🏗️ JOB DEFINITION
-# ============================
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # ============================
-    # 🔐 GLOBAL ENVIRONMENT VARIABLES (FROM GITHUB SECRETS)
-    # ============================
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
     steps:
 
-      # ============================
-      # 📥 STEP 1: CHECKOUT SOURCE CODE
-      # ============================
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+    ########################################
+    # 📥 CHECKOUT SOURCE CODE
+    ########################################
+    - name: Checkout Repository
+      uses: actions/checkout@v3
 
-      # ============================
-      # ⚙️ STEP 2: SETUP NODE ENVIRONMENT
-      # ============================
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
+    ########################################
+    # 🟢 SETUP NODE ENVIRONMENT
+    ########################################
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: "18"
 
-      # ============================
-      # 📦 STEP 3: INSTALL DEPENDENCIES
-      # ============================
-      - name: Install Dependencies
-        run: npm install
+    ########################################
+    # 📦 INSTALL DEPENDENCIES
+    ########################################
+    - name: Install Dependencies
+      run: npm install
 
-      # ============================
-      # 🚀 STEP 4: START APPLICATION (REQUIRED FOR TESTING)
-      # ============================
-      - name: Start App
-        run: |
-          node app.js &
-          sleep 5
+    ########################################
+    # 🧪 RUN APPLICATION TEST
+    ########################################
+    - name: Run Tests (Start App + Health Check)
+      run: |
+        node app.js &
+        sleep 5
+        curl -f http://localhost:3000/health
 
-      # ============================
-      # 🧪 STEP 5: RUN APPLICATION TESTS
-      # ============================
-      - name: Run Tests
-        run: npm test
+    ########################################
+    # 🐳 BUILD DOCKER IMAGE
+    ########################################
+    - name: Build Docker Image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/cicd-app .
 
-      # ============================
-      # 🐳 STEP 6: BUILD DOCKER IMAGE
-      # ============================
-      - name: Build Docker Image
-        run: docker build -t $DOCKER_USERNAME/cicd-app .
+    ########################################
+    # 🔐 LOGIN TO DOCKER HUB
+    ########################################
+    - name: Login to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # ============================
-      # 🔐 STEP 7: LOGIN TO DOCKER HUB
-      # ============================
-      - name: Login to Docker Hub
-        run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    ########################################
+    # 📤 PUSH IMAGE TO DOCKER HUB
+    ########################################
+    - name: Push Docker Image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/cicd-app
 
-      # ============================
-      # 📤 STEP 8: PUSH IMAGE TO DOCKER HUB
-      # ============================
-      - name: Push Docker Image
-        run: docker push $DOCKER_USERNAME/cicd-app
+    ########################################
+    # ⚙️ SETUP TERRAFORM
+    ########################################
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
 
-      # ============================
-      # 🌍 STEP 9: SETUP TERRAFORM
-      # ============================
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+    ########################################
+    # 🔄 TERRAFORM INIT
+    ########################################
+    - name: Terraform Init
+      working-directory: terraform
+      run: terraform init
 
-      # ============================
-      # 🔧 STEP 10: INITIALIZE TERRAFORM
-      # ============================
-      - name: Terraform Init
-        working-directory: terraform
-        run: terraform init
+    ########################################
+    # 🚀 TERRAFORM APPLY (WITH PUBLIC KEY)
+    ########################################
+    - name: Terraform Apply
+      working-directory: terraform
+      run: terraform apply -auto-approve -var="public_key=${{ secrets.PUBLIC_KEY }}"
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
-      # ============================
-      # 🚀 STEP 11: APPLY INFRASTRUCTURE (CREATE EC2)
-      # ============================
-      - name: Terraform Apply
-        working-directory: terraform
-        run: terraform apply -auto-approve
+    ########################################
+    # 🌐 GET EC2 PUBLIC IP
+    ########################################
+    - name: Get EC2 Public IP
+      id: get_ip
+      working-directory: terraform
+      run: |
+        echo "VM_HOST=$(terraform output -raw public_ip)" >> $GITHUB_ENV
 
-      # ============================
-      # 🌐 STEP 12: GET DYNAMIC EC2 PUBLIC IP
-      # (Overrides static VM_HOST secret)
-      # ============================
-      - name: Get EC2 Public IP
-        working-directory: terraform
-        run: |
-          echo "VM_HOST=$(terraform output -raw public_ip)" >> $GITHUB_ENV
+    ########################################
+    # 🚀 DEPLOY TO EC2 VIA SSH
+    ########################################
+    - name: Deploy to EC2
+      run: |
+        echo "${{ secrets.VM_SSH_KEY }}" > key.pem
+        chmod 600 key.pem
 
-      # ============================
-      # 🔐 STEP 13: DEPLOY APPLICATION TO EC2 VIA SSH
-      # ============================
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ env.VM_HOST }}
-          username: ubuntu
-          key: ${{ secrets.VM_SSH_KEY }}
-          script: |
-            docker pull $DOCKER_USERNAME/cicd-app
-            docker stop app || true
-            docker rm app || true
-            docker run -d -p 80:3000 --name app $DOCKER_USERNAME/cicd-app
+        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@$VM_HOST << 'EOF'
+          docker pull ${{ secrets.DOCKER_USERNAME }}/cicd-app
+          docker stop app || true
+          docker rm app || true
+          docker run -d -p 3000:3000 --name app ${{ secrets.DOCKER_USERNAME }}/cicd-app
+        EOF
 
-      # ============================
-      # ✅ STEP 14: POST-DEPLOYMENT HEALTH CHECK
-      # ============================
-      - name: Health Check
-        run: curl http://${{ env.VM_HOST }}/health
+    ########################################
+    # ❤️ HEALTH CHECK (FINAL VALIDATION)
+    ########################################
+    - name: Health Check
+      run: |
+        sleep 10
+        curl http://$VM_HOST:3000/health
