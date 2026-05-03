@@ -5,7 +5,7 @@ const PORT = process.env.PORT || 3000;
 
 /* Root Endpoint */
 app.get('/', (req, res) => {
-  res.send('Container Deployment Successful!');
+  res.send('CI/CD Pipeline Working Successfully!');
 });
 
 /* Health Check Endpoint (CRITICAL FOR CI/CD) */
