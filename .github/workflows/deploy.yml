@@ -48,51 +48,59 @@ jobs:
         run: npm install
 
       # ============================
-      # 🧪 STEP 4: RUN APPLICATION TESTS
+      # 🚀 STEP 4: START APPLICATION (REQUIRED FOR TESTING)
+      # ============================
+      - name: Start App
+        run: |
+          node app.js &
+          sleep 5
+
+      # ============================
+      # 🧪 STEP 5: RUN APPLICATION TESTS
       # ============================
       - name: Run Tests
         run: npm test
 
       # ============================
-      # 🐳 STEP 5: BUILD DOCKER IMAGE
+      # 🐳 STEP 6: BUILD DOCKER IMAGE
       # ============================
       - name: Build Docker Image
         run: docker build -t $DOCKER_USERNAME/cicd-app .
 
       # ============================
-      # 🔐 STEP 6: LOGIN TO DOCKER HUB
+      # 🔐 STEP 7: LOGIN TO DOCKER HUB
       # ============================
       - name: Login to Docker Hub
         run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
       # ============================
-      # 📤 STEP 7: PUSH IMAGE TO DOCKER HUB
+      # 📤 STEP 8: PUSH IMAGE TO DOCKER HUB
       # ============================
       - name: Push Docker Image
         run: docker push $DOCKER_USERNAME/cicd-app
 
       # ============================
-      # 🌍 STEP 8: SETUP TERRAFORM
+      # 🌍 STEP 9: SETUP TERRAFORM
       # ============================
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       # ============================
-      # 🔧 STEP 9: INITIALIZE TERRAFORM
+      # 🔧 STEP 10: INITIALIZE TERRAFORM
       # ============================
       - name: Terraform Init
         working-directory: terraform
         run: terraform init
 
       # ============================
-      # 🚀 STEP 10: APPLY INFRASTRUCTURE (CREATE EC2)
+      # 🚀 STEP 11: APPLY INFRASTRUCTURE (CREATE EC2)
       # ============================
       - name: Terraform Apply
         working-directory: terraform
         run: terraform apply -auto-approve
 
       # ============================
-      # 🌐 STEP 11: GET DYNAMIC EC2 PUBLIC IP
+      # 🌐 STEP 12: GET DYNAMIC EC2 PUBLIC IP
       # (Overrides static VM_HOST secret)
       # ============================
       - name: Get EC2 Public IP
@@ -101,7 +109,7 @@ jobs:
           echo "VM_HOST=$(terraform output -raw public_ip)" >> $GITHUB_ENV
 
       # ============================
-      # 🔐 STEP 12: DEPLOY APPLICATION TO EC2 VIA SSH
+      # 🔐 STEP 13: DEPLOY APPLICATION TO EC2 VIA SSH
       # ============================
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -116,7 +124,7 @@ jobs:
             docker run -d -p 80:3000 --name app $DOCKER_USERNAME/cicd-app
 
       # ============================
-      # ✅ STEP 13: HEALTH CHECK
+      # ✅ STEP 14: POST-DEPLOYMENT HEALTH CHECK
       # ============================
       - name: Health Check
         run: curl http://${{ env.VM_HOST }}/health
