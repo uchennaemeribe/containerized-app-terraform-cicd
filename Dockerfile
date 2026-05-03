@@ -1,20 +1,34 @@
-# Use lightweight Node image (Base environment)
+# =========================================
+# 🐳 Base Image (Base environment)
+# =========================================
 FROM node:18-alpine
 
-# Create working directory (Where app runs)
+# =========================================
+# 📁 Set Working Directory (Where app runs)
+# =========================================
 WORKDIR /app
 
-# Copy dependency files (Faster dependency caching)
+# =========================================
+# 📦 Copy Dependencies (Faster dependency caching)
+# =========================================
 COPY package*.json ./
 
-# Install only production dependencies (Install only the dependencies your app needs to run)
+# =========================================
+# ⚙️ Install Production Dependencies (Install only the dependencies your app needs to run)
+# =========================================
 RUN npm install --production
 
-# Copy application files (codes)
+# =========================================
+# 📂 Copy Application Source Code
+# =========================================
 COPY . .
 
-# Expose application port
+# =========================================
+# 🌐 Expose Application Port
+# =========================================
 EXPOSE 3000
 
-# Start application (server)
+# =========================================
+# ▶️ Start Application (Server)
+# =========================================
 CMD ["node", "app.js"]

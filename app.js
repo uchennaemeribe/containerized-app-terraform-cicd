@@ -1,23 +1,31 @@
+// =========================================
+// 🚀 Import Dependencies
+// =========================================
 const express = require('express');
 const app = express();
 
-const PORT = process.env.PORT || 3000;
+// =========================================
+// ⚙️ Application Configuration
+// =========================================
+const PORT = 3000;
 
-/* Root Endpoint */
+// =========================================
+// 🌐 Root Endpoint
+// =========================================
 app.get('/', (req, res) => {
-  res.send('CI/CD Pipeline Working Successfully!');
+  res.send('🚀 CI/CD Pipeline Working Successfully!');
 });
 
-/* Health Check Endpoint (CRITICAL FOR CI/CD) */
+// =========================================
+// ❤️ Health Check Endpoint
+// =========================================
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: "OK",
-    uptime: process.uptime(),
-    timestamp: new Date()
-  });
+  res.json({ status: "OK" });
 });
 
-/* Start Server */
+// =========================================
+// ▶️ Start Server
+// =========================================
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

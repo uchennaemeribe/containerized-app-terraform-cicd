@@ -54,10 +54,12 @@ This project implements a **complete pipeline lifecycle**:
 
 ## 🧪 Health Check
 
-The application includes a health endpoint:
+The application exposes a health endpoint:
+
 /health
 
-Used in CI/CD to verify deployment readiness.
+This endpoint is used by the CI/CD pipeline to validate successful deployment. 
+If the endpoint does not return a successful response, the pipeline fails automatically.
 
 ## 📁 Project Structure
 containerized-app-terraform-cicd/
