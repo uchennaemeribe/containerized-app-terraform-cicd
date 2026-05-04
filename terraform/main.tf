@@ -1,35 +1,59 @@
-# ==========================================
+# ==========================================================
 # FILE: terraform/main.tf
-# PURPOSE: Provision AWS infrastructure
-# DESCRIPTION:
-# - EC2 instance
-# - Security group
-# - SSH key injection
-# - Docker auto-install
-# ==========================================
+# PURPOSE: AWS Infrastructure Provisioning
+# ==========================================================
 
-# ==========================================================
-# TERRAFORM CONFIGURATION
-# ==========================================================
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source = "hashicorp/random"
+    }
   }
 }
 
 # ==========================================================
-# AWS PROVIDER
+# PROVIDER CONFIGURATION
 # ==========================================================
+
 provider "aws" {
   region = var.aws_region
 }
 
 # ==========================================================
+# VARIABLES
+# ==========================================================
+
+variable "aws_region" {
+  description = "AWS deployment region"
+  type        = string
+}
+
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+}
+
+variable "public_key" {
+  description = "SSH public key"
+  type        = string
+}
+
+# ==========================================================
+# RANDOM SUFFIX (PREVENT NAME COLLISIONS)
+# ==========================================================
+
+resource "random_id" "suffix" {
+  byte_length = 2
+}
+
+# ==========================================================
 # FETCH LATEST UBUNTU AMI (REGION-AWARE)
 # ==========================================================
+
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -49,17 +73,18 @@ data "aws_ami" "ubuntu" {
 # ==========================================================
 # SSH KEY PAIR
 # ==========================================================
+
 resource "aws_key_pair" "deployer" {
-  key_name   = "cicd-key"
+  key_name   = "cicd-key-${random_id.suffix.hex}"
   public_key = var.public_key
 }
 
 # ==========================================================
 # SECURITY GROUP
 # ==========================================================
+
 resource "aws_security_group" "app_sg" {
-  name        = "cicd-sg"
-  description = "Allow SSH and application traffic"
+  name = "cicd-sg-${random_id.suffix.hex}"
 
   ingress {
     description = "SSH Access"
@@ -70,7 +95,7 @@ resource "aws_security_group" "app_sg" {
   }
 
   ingress {
-    description = "App Access (Port 3000)"
+    description = "Application Port"
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
@@ -78,7 +103,7 @@ resource "aws_security_group" "app_sg" {
   }
 
   egress {
-    description = "Allow all outbound"
+    description = "Allow All Outbound"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -89,6 +114,7 @@ resource "aws_security_group" "app_sg" {
 # ==========================================================
 # EC2 INSTANCE
 # ==========================================================
+
 resource "aws_instance" "vm" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
@@ -96,9 +122,6 @@ resource "aws_instance" "vm" {
   key_name               = aws_key_pair.deployer.key_name
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
-  # --------------------------------------------------------
-  # USER DATA: INSTALL DOCKER
-  # --------------------------------------------------------
   user_data = <<-EOF
               #!/bin/bash
               apt update -y
@@ -111,4 +134,12 @@ resource "aws_instance" "vm" {
   tags = {
     Name = "cicd-instance"
   }
+}
+
+# ==========================================================
+# OUTPUTS
+# ==========================================================
+
+output "public_ip" {
+  value = aws_instance.vm.public_ip
 }
