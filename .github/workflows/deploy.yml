@@ -40,7 +40,7 @@ jobs:
       run: npm install
 
     # ==========================================
-    # STEP 3: Run Tests (Health Check)
+    # STEP 3: Run Tests
     # ==========================================
     - name: Run Tests
       run: |
@@ -55,32 +55,32 @@ jobs:
       run: docker build -t ${{ secrets.DOCKER_USERNAME }}/cicd-app .
 
     # ==========================================
-    # STEP 5: Login to Docker Hub
+    # STEP 5: Docker Login
     # ==========================================
     - name: Login to Docker Hub
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
     # ==========================================
-    # STEP 6: Push Docker Image
+    # STEP 6: Push Image
     # ==========================================
     - name: Push Docker Image
       run: docker push ${{ secrets.DOCKER_USERNAME }}/cicd-app
 
     # ==========================================
-    # STEP 7: Setup Terraform
+    # STEP 7: Terraform Setup
     # ==========================================
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
     # ==========================================
-    # STEP 8: Terraform Init (Upgrade Providers)
+    # STEP 8: Terraform Init
     # ==========================================
     - name: Terraform Init
       working-directory: terraform
       run: terraform init -upgrade
 
     # ==========================================
-    # STEP 9: Terraform Apply (Provision EC2)
+    # STEP 9: Terraform Apply
     # ==========================================
     - name: Terraform Apply
       working-directory: terraform
@@ -91,7 +91,7 @@ jobs:
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
     # ==========================================
-    # STEP 10: Retrieve EC2 Public IP
+    # STEP 10: Get EC2 Public IP
     # ==========================================
     - name: Get EC2 Public IP
       id: ec2_ip
@@ -99,7 +99,7 @@ jobs:
       run: echo "ip=$(terraform output -raw public_ip)" >> $GITHUB_OUTPUT
 
     # ==========================================
-    # STEP 11: Wait for SSH Availability
+    # STEP 11: Wait for SSH
     # ==========================================
     - name: Wait for EC2 SSH
       run: |
@@ -111,7 +111,7 @@ jobs:
         exit 1
 
     # ==========================================
-    # STEP 12: Deploy to EC2 (WITH DOCKER FIX)
+    # STEP 12: Deploy (FIXED FOR GOOD)
     # ==========================================
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v1.0.0
@@ -120,24 +120,40 @@ jobs:
         username: ubuntu
         key: ${{ secrets.VM_SSH_KEY }}
         script: |
-          echo "===== CHECKING DOCKER ====="
-          if ! command -v docker &> /dev/null
-          then
-            echo "Docker not found. Installing..."
+
+          echo "===== WAIT FOR APT LOCK ====="
+          while sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+            echo "Waiting for apt lock..."
+            sleep 5
+          done
+
+          echo "===== INSTALL DOCKER (OFFICIAL METHOD) ====="
+          if ! command -v docker &> /dev/null; then
             sudo apt update -y
-            sudo apt install -y docker.io
+            sudo apt install -y ca-certificates curl gnupg
+
+            sudo install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+            echo \
+              "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+              https://download.docker.com/linux/ubuntu \
+              $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+              | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+            sudo apt update -y
+            sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
             sudo systemctl start docker
             sudo systemctl enable docker
           fi
 
-          echo "===== FIX PERMISSIONS ====="
-          sudo usermod -aG docker ubuntu
-
-          echo "===== DEPLOY APPLICATION ====="
+          echo "===== DEPLOY APP ====="
           sudo docker stop app || true
           sudo docker rm app || true
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/cicd-app
           sudo docker run -d -p 3000:3000 --name app ${{ secrets.DOCKER_USERNAME }}/cicd-app
 
-          echo "===== VERIFY DEPLOYMENT ====="
+          echo "===== VERIFY ====="
           sudo docker ps
