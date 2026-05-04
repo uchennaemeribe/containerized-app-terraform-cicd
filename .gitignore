@@ -19,6 +19,15 @@ terraform/*.tfstate
 terraform/*.tfstate.backup
 tfplan
 *.tfplan
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
 
 # SSH Keys (CRITICAL SECURITY)
 *.pem
