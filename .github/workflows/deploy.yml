@@ -1,5 +1,6 @@
 # ==========================================
-# CI/CD PIPELINE: BUILD → PUSH → PROVISION → DEPLOY
+# FILE: .github/workflows/deploy.yml
+# PURPOSE: Full CI/CD pipeline
 # ==========================================
 
 name: Deploy Application
@@ -17,19 +18,19 @@ jobs:
     steps:
 
     # ======================================================
-    # STEP 1: Checkout Code
+    # CHECKOUT CODE
     # ======================================================
     - name: Checkout Repository
       uses: actions/checkout@v4
 
     # ======================================================
-    # STEP 2: Install Dependencies
+    # INSTALL DEPENDENCIES
     # ======================================================
     - name: Install Dependencies
       run: npm install
 
     # ======================================================
-    # STEP 3: Run Tests
+    # RUN TESTS
     # ======================================================
     - name: Run Tests
       run: |
@@ -38,38 +39,38 @@ jobs:
         curl -f http://localhost:3000/health
 
     # ======================================================
-    # STEP 4: Build Docker Image
+    # BUILD DOCKER IMAGE
     # ======================================================
     - name: Build Docker Image
       run: docker build -t ${{ secrets.DOCKER_USERNAME }}/cicd-app .
 
     # ======================================================
-    # STEP 5: Docker Login
+    # LOGIN TO DOCKER HUB
     # ======================================================
     - name: Login to Docker Hub
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
     # ======================================================
-    # STEP 6: Push Image
+    # PUSH DOCKER IMAGE
     # ======================================================
     - name: Push Docker Image
       run: docker push ${{ secrets.DOCKER_USERNAME }}/cicd-app
 
     # ======================================================
-    # STEP 7: Setup Terraform
+    # SETUP TERRAFORM
     # ======================================================
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
     # ======================================================
-    # STEP 8: Terraform Init
+    # TERRAFORM INIT
     # ======================================================
     - name: Terraform Init
       working-directory: terraform
       run: terraform init
 
     # ======================================================
-    # STEP 9: Terraform Apply
+    # TERRAFORM APPLY
     # ======================================================
     - name: Terraform Apply
       working-directory: terraform
@@ -83,7 +84,7 @@ jobs:
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
     # ======================================================
-    # STEP 10: Get EC2 IP + SHOW SUMMARY
+    # GET EC2 PUBLIC IP
     # ======================================================
     - name: Get EC2 Public IP
       id: ec2_ip
@@ -98,7 +99,7 @@ jobs:
         echo "**App URL:** http://$IP:3000" >> $GITHUB_STEP_SUMMARY
 
     # ======================================================
-    # STEP 11: Wait for SSH
+    # WAIT FOR SSH
     # ======================================================
     - name: Wait for SSH
       run: |
@@ -111,7 +112,7 @@ jobs:
         exit 1
 
     # ======================================================
-    # STEP 12: Deploy to EC2
+    # DEPLOY TO EC2
     # ======================================================
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v1.0.0
@@ -120,7 +121,7 @@ jobs:
         username: ubuntu
         key: ${{ secrets.VM_SSH_KEY }}
         script: |
-          echo "Waiting for Docker to be ready..."
+          echo "Waiting for Docker..."
           for i in {1..10}; do
             docker info && break
             sleep 5
