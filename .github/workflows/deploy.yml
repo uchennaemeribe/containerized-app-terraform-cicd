@@ -1,115 +1,125 @@
+# ==========================================
+# FILE: .github/workflows/deploy.yml
+# PURPOSE: End-to-End CI/CD Pipeline (Build, Test, Push, Provision, Deploy)
+# ==========================================
+
 name: CI/CD Pipeline
 
+# ==========================================
+# TRIGGER CONFIGURATION
+# ==========================================
 on:
   push:
     branches:
       - main
 
+# ==========================================
+# JOB DEFINITION
+# ==========================================
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-
-    ########################################
-    # 📥 CHECKOUT SOURCE CODE
-    ########################################
+    # ==========================================
+    # STEP 1: CHECKOUT REPOSITORY
+    # ==========================================
     - name: Checkout Repository
       uses: actions/checkout@v3
 
-    ########################################
-    # 🟢 SETUP NODE ENVIRONMENT
-    ########################################
+    # ==========================================
+    # STEP 2: SETUP NODE ENVIRONMENT
+    # ==========================================
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: "18"
+        node-version: 18
 
-    ########################################
-    # 📦 INSTALL DEPENDENCIES
-    ########################################
+    # ==========================================
+    # STEP 3: INSTALL DEPENDENCIES
+    # ==========================================
     - name: Install Dependencies
       run: npm install
 
-    ########################################
-    # 🧪 RUN APPLICATION TEST
-    ########################################
+    # ==========================================
+    # STEP 4: RUN TEST (START APP + HEALTH CHECK)
+    # ==========================================
     - name: Run Tests (Start App + Health Check)
       run: |
         node app.js &
         sleep 5
-        curl -f http://localhost:3000/health
+        curl -f http://localhost:3000/health || exit 1
 
-    ########################################
-    # 🐳 BUILD DOCKER IMAGE
-    ########################################
+    # ==========================================
+    # STEP 5: BUILD DOCKER IMAGE
+    # ==========================================
     - name: Build Docker Image
       run: docker build -t ${{ secrets.DOCKER_USERNAME }}/cicd-app .
 
-    ########################################
-    # 🔐 LOGIN TO DOCKER HUB
-    ########################################
+    # ==========================================
+    # STEP 6: LOGIN TO DOCKER HUB
+    # ==========================================
     - name: Login to Docker Hub
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    ########################################
-    # 📤 PUSH IMAGE TO DOCKER HUB
-    ########################################
+    # ==========================================
+    # STEP 7: PUSH DOCKER IMAGE
+    # ==========================================
     - name: Push Docker Image
       run: docker push ${{ secrets.DOCKER_USERNAME }}/cicd-app
 
-    ########################################
-    # ⚙️ SETUP TERRAFORM
-    ########################################
+    # ==========================================
+    # STEP 8: SETUP TERRAFORM
+    # ==========================================
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
 
-    ########################################
-    # 🔄 TERRAFORM INIT
-    ########################################
+    # ==========================================
+    # STEP 9: TERRAFORM INIT
+    # ==========================================
     - name: Terraform Init
       working-directory: terraform
       run: terraform init
 
-    ########################################
-    # 🚀 TERRAFORM APPLY (WITH PUBLIC KEY)
-    ########################################
+    # ==========================================
+    # STEP 10: TERRAFORM APPLY (PROVISION INFRA)
+    # ==========================================
     - name: Terraform Apply
       working-directory: terraform
-      run: terraform apply -auto-approve -var="public_key=${{ secrets.PUBLIC_KEY }}"
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      run: terraform apply -auto-approve -var="public_key=${{ secrets.VM_PUBLIC_KEY }}"
 
-    ########################################
-    # 🌐 GET EC2 PUBLIC IP
-    ########################################
+    # ==========================================
+    # STEP 11: EXTRACT EC2 PUBLIC IP (DYNAMIC)
+    # ==========================================
     - name: Get EC2 Public IP
-      id: get_ip
       working-directory: terraform
       run: |
-        echo "VM_HOST=$(terraform output -raw public_ip)" >> $GITHUB_ENV
+        IP=$(terraform output -raw public_ip | head -n 1 | tr -d '[:space:]')
+        echo "VM_HOST=$IP" >> $GITHUB_ENV
 
-    ########################################
-    # 🚀 DEPLOY TO EC2 VIA SSH
-    ########################################
+    # ==========================================
+    # STEP 12: DEPLOY CONTAINER TO EC2
+    # ==========================================
     - name: Deploy to EC2
-      run: |
-        echo "${{ secrets.VM_SSH_KEY }}" > key.pem
-        chmod 600 key.pem
-
-        ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@$VM_HOST << 'EOF'
-          docker pull ${{ secrets.DOCKER_USERNAME }}/cicd-app
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ env.VM_HOST }}
+        username: ubuntu
+        key: ${{ secrets.VM_SSH_KEY }}
+        script: |
           docker stop app || true
           docker rm app || true
+          docker pull ${{ secrets.DOCKER_USERNAME }}/cicd-app
           docker run -d -p 3000:3000 --name app ${{ secrets.DOCKER_USERNAME }}/cicd-app
-        EOF
 
-    ########################################
-    # ❤️ HEALTH CHECK (FINAL VALIDATION)
-    ########################################
+    # ==========================================
+    # STEP 13: HEALTH CHECK (PRODUCTION)
+    # ==========================================
     - name: Health Check
       run: |
         sleep 10
-        curl http://$VM_HOST:3000/health
+        curl -f http://${{ env.VM_HOST }}:3000/health || exit 1
