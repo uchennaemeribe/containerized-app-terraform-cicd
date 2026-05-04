@@ -1,6 +1,6 @@
 # ==========================================================
-# FILE: terraform/main.tf
-# PURPOSE: AWS Infrastructure Resources ONLY
+# TERRAFORM CONFIGURATION
+# PURPOSE: Provision AWS infrastructure for CI/CD deployment
 # ==========================================================
 
 terraform {
@@ -9,26 +9,40 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    random = {
-      source = "hashicorp/random"
-    }
   }
 }
+
+# ==========================================================
+# PROVIDER CONFIGURATION
+# ==========================================================
 
 provider "aws" {
   region = var.aws_region
 }
 
-# ----------------------------------------------------------
-# RANDOM SUFFIX (PREVENT NAME COLLISION)
-# ----------------------------------------------------------
-resource "random_id" "suffix" {
-  byte_length = 2
+# ==========================================================
+# VARIABLES
+# ==========================================================
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
 }
 
-# ----------------------------------------------------------
-# FETCH LATEST UBUNTU AMI
-# ----------------------------------------------------------
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+}
+
+variable "public_key" {
+  description = "SSH public key"
+  type        = string
+}
+
+# ==========================================================
+# FETCH LATEST UBUNTU AMI (REGION-AWARE)
+# ==========================================================
+
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -45,19 +59,21 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# ----------------------------------------------------------
-# SSH KEY PAIR
-# ----------------------------------------------------------
+# ==========================================================
+# KEY PAIR
+# ==========================================================
+
 resource "aws_key_pair" "deployer" {
-  key_name   = "cicd-key-${random_id.suffix.hex}"
+  key_name   = "cicd-key"
   public_key = var.public_key
 }
 
-# ----------------------------------------------------------
+# ==========================================================
 # SECURITY GROUP
-# ----------------------------------------------------------
+# ==========================================================
+
 resource "aws_security_group" "app_sg" {
-  name = "cicd-sg-${random_id.suffix.hex}"
+  name = "cicd-sg"
 
   ingress {
     description = "SSH"
@@ -83,9 +99,10 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
-# ----------------------------------------------------------
-# EC2 INSTANCE
-# ----------------------------------------------------------
+# ==========================================================
+# EC2 INSTANCE (DOCKER PRE-INSTALLED)
+# ==========================================================
+
 resource "aws_instance" "vm" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
@@ -95,8 +112,8 @@ resource "aws_instance" "vm" {
 
   user_data = <<-EOF
               #!/bin/bash
-              apt update -y
-              apt install -y docker.io
+              apt-get update -y
+              apt-get install -y docker.io
               systemctl start docker
               systemctl enable docker
               usermod -aG docker ubuntu
