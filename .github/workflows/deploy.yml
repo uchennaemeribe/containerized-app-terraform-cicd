@@ -1,17 +1,8 @@
 # ==========================================
-# FILE: .github/workflows/deploy.yml
-# PURPOSE: End-to-End CI/CD Pipeline
-# DESCRIPTION:
-# - Build & test Node.js app
-# - Build & push Docker image
-# - Provision infrastructure via Terraform
-# - Dynamically retrieve EC2 public IP
-# - Wait for EC2 readiness
-# - Deploy container via SSH
-# - Perform health check
+# CI/CD PIPELINE: BUILD → PUSH → PROVISION → DEPLOY
 # ==========================================
 
-name: CI/CD Pipeline
+name: Deploy Application
 
 on:
   push:
@@ -20,124 +11,122 @@ on:
 
 jobs:
   deploy:
+    name: Build, Provision & Deploy
     runs-on: ubuntu-latest
 
     steps:
 
-    # ==========================================
-    # STEP 1: Checkout Repository
-    # ==========================================
+    # ======================================================
+    # STEP 1: Checkout Code
+    # ======================================================
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    # ==========================================
-    # STEP 2: Setup Node.js
-    # ==========================================
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-
-    # ==========================================
-    # STEP 3: Install Dependencies
-    # ==========================================
+    # ======================================================
+    # STEP 2: Install Dependencies
+    # ======================================================
     - name: Install Dependencies
       run: npm install
 
-    # ==========================================
-    # STEP 4: Run Tests (Start App + Health Check)
-    # ==========================================
-    - name: Run Tests (Start App + Health Check)
+    # ======================================================
+    # STEP 3: Run Tests
+    # ======================================================
+    - name: Run Tests
       run: |
         node app.js &
         sleep 5
         curl -f http://localhost:3000/health
 
-    # ==========================================
-    # STEP 5: Build Docker Image
-    # ==========================================
+    # ======================================================
+    # STEP 4: Build Docker Image
+    # ======================================================
     - name: Build Docker Image
       run: docker build -t ${{ secrets.DOCKER_USERNAME }}/cicd-app .
 
-    # ==========================================
-    # STEP 6: Login to Docker Hub
-    # ==========================================
+    # ======================================================
+    # STEP 5: Docker Login
+    # ======================================================
     - name: Login to Docker Hub
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    # ==========================================
-    # STEP 7: Push Docker Image
-    # ==========================================
+    # ======================================================
+    # STEP 6: Push Image
+    # ======================================================
     - name: Push Docker Image
       run: docker push ${{ secrets.DOCKER_USERNAME }}/cicd-app
 
-    # ==========================================
-    # STEP 8: Setup Terraform
-    # ==========================================
+    # ======================================================
+    # STEP 7: Setup Terraform
+    # ======================================================
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
-    # ==========================================
-    # STEP 9: Terraform Init
-    # ==========================================
+    # ======================================================
+    # STEP 8: Terraform Init
+    # ======================================================
     - name: Terraform Init
       working-directory: terraform
       run: terraform init
 
-    # ==========================================
-    # STEP 10: Terraform Apply
-    # ==========================================
+    # ======================================================
+    # STEP 9: Terraform Apply
+    # ======================================================
     - name: Terraform Apply
       working-directory: terraform
-      run: terraform apply -auto-approve -var="public_key=${{ secrets.VM_PUBLIC_KEY }}"
+      run: |
+        terraform apply -auto-approve \
+        -var="public_key=${{ secrets.VM_PUBLIC_KEY }}" \
+        -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}"
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
-    # ==========================================
-    # STEP 11: Get EC2 Public IP
-    # ==========================================
+    # ======================================================
+    # STEP 10: Get EC2 IP + SHOW SUMMARY
+    # ======================================================
     - name: Get EC2 Public IP
+      id: ec2_ip
       working-directory: terraform
       run: |
-        terraform output -raw public_ip > ip.txt
-        IP=$(cat ip.txt | tr -d '[:space:]')
-        echo "VM_HOST=$IP" >> $GITHUB_ENV
+        IP=$(terraform output -raw public_ip)
+        echo "ip=$IP" >> $GITHUB_OUTPUT
 
-    # ==========================================
-    # STEP 12: Wait for EC2 SSH Readiness
-    # ==========================================
-    - name: Wait for EC2 SSH
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "**EC2 IP:** $IP" >> $GITHUB_STEP_SUMMARY
+        echo "**SSH:** ssh -i ~/.ssh/id_rsa ubuntu@$IP" >> $GITHUB_STEP_SUMMARY
+        echo "**App URL:** http://$IP:3000" >> $GITHUB_STEP_SUMMARY
+
+    # ======================================================
+    # STEP 11: Wait for SSH
+    # ======================================================
+    - name: Wait for SSH
       run: |
-        echo "Waiting for EC2 to be ready..."
+        IP=${{ steps.ec2_ip.outputs.ip }}
         for i in {1..12}; do
-          nc -zv ${{ env.VM_HOST }} 22 && echo "SSH is ready" && exit 0
-          echo "Still waiting for SSH..."
+          nc -zv $IP 22 && echo "SSH Ready" && exit 0
+          echo "Waiting for SSH..."
           sleep 10
         done
-        echo "SSH not ready after waiting"
         exit 1
 
-    # ==========================================
-    # STEP 13: Deploy to EC2 via SSH
-    # ==========================================
+    # ======================================================
+    # STEP 12: Deploy to EC2
+    # ======================================================
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v1.0.0
       with:
-        host: ${{ env.VM_HOST }}
+        host: ${{ steps.ec2_ip.outputs.ip }}
         username: ubuntu
         key: ${{ secrets.VM_SSH_KEY }}
         script: |
+          echo "Waiting for Docker to be ready..."
+          for i in {1..10}; do
+            docker info && break
+            sleep 5
+          done
+
           docker stop app || true
           docker rm app || true
           docker pull ${{ secrets.DOCKER_USERNAME }}/cicd-app
           docker run -d -p 3000:3000 --name app ${{ secrets.DOCKER_USERNAME }}/cicd-app
-
-    # ==========================================
-    # STEP 14: Health Check (Production)
-    # ==========================================
-    - name: Health Check
-      run: |
-        sleep 10
-        curl -f http://${{ env.VM_HOST }}:3000/health
