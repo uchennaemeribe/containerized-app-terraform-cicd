@@ -1,21 +1,22 @@
 # ==========================================
 # FILE: .github/workflows/deploy.yml
-# PURPOSE: End-to-End CI/CD Pipeline (Build, Test, Push, Provision, Deploy)
+# PURPOSE: CI/CD Pipeline for Build, Test, Terraform Provisioning, and Deployment
+# DESCRIPTION:
+# This workflow:
+# 1. Builds and tests the Node.js app
+# 2. Builds & pushes Docker image
+# 3. Provisions infrastructure using Terraform
+# 4. Dynamically retrieves EC2 public IP
+# 5. Deploys container via SSH
 # ==========================================
 
 name: CI/CD Pipeline
 
-# ==========================================
-# TRIGGER CONFIGURATION
-# ==========================================
 on:
   push:
     branches:
       - main
 
-# ==========================================
-# JOB DEFINITION
-# ==========================================
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -23,89 +24,88 @@ jobs:
     steps:
 
     # ==========================================
-    # STEP 1: CHECKOUT REPOSITORY
+    # STEP 1: Checkout Repository
     # ==========================================
     - name: Checkout Repository
       uses: actions/checkout@v3
 
     # ==========================================
-    # STEP 2: SETUP NODE ENVIRONMENT
+    # STEP 2: Setup Node.js Environment
     # ==========================================
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 18
+        node-version: '18'
 
     # ==========================================
-    # STEP 3: INSTALL DEPENDENCIES
+    # STEP 3: Install Dependencies
     # ==========================================
     - name: Install Dependencies
       run: npm install
 
     # ==========================================
-    # STEP 4: RUN TEST (START APP + HEALTH CHECK)
+    # STEP 4: Run Tests (Start App + Health Check)
     # ==========================================
     - name: Run Tests (Start App + Health Check)
       run: |
         node app.js &
         sleep 5
-        curl -f http://localhost:3000/health || exit 1
+        curl -f http://localhost:3000/health
 
     # ==========================================
-    # STEP 5: BUILD DOCKER IMAGE
+    # STEP 5: Build Docker Image
     # ==========================================
     - name: Build Docker Image
       run: docker build -t ${{ secrets.DOCKER_USERNAME }}/cicd-app .
 
     # ==========================================
-    # STEP 6: LOGIN TO DOCKER HUB
+    # STEP 6: Login to Docker Hub
     # ==========================================
     - name: Login to Docker Hub
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
     # ==========================================
-    # STEP 7: PUSH DOCKER IMAGE
+    # STEP 7: Push Docker Image
     # ==========================================
     - name: Push Docker Image
       run: docker push ${{ secrets.DOCKER_USERNAME }}/cicd-app
 
     # ==========================================
-    # STEP 8: SETUP TERRAFORM
+    # STEP 8: Setup Terraform
     # ==========================================
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
+      uses: hashicorp/setup-terraform@v3
 
     # ==========================================
-    # STEP 9: TERRAFORM INIT
+    # STEP 9: Terraform Init
     # ==========================================
     - name: Terraform Init
       working-directory: terraform
       run: terraform init
 
     # ==========================================
-    # STEP 10: TERRAFORM APPLY (WITH PUBLIC KEY FIX)
+    # STEP 10: Terraform Apply
     # ==========================================
     - name: Terraform Apply
       working-directory: terraform
+      run: terraform apply -auto-approve -var="public_key=${{ secrets.VM_PUBLIC_KEY }}"
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-      run: |
-        terraform apply -auto-approve \
-        -var="public_key=${{ secrets.VM_PUBLIC_KEY }}"
 
     # ==========================================
-    # STEP 11: EXTRACT CLEAN EC2 PUBLIC IP
+    # STEP 11: Get EC2 Public IP (FIXED)
     # ==========================================
     - name: Get EC2 Public IP
       working-directory: terraform
       run: |
-        IP=$(terraform output -raw public_ip | head -n 1 | tr -d '[:space:]')
+        terraform output -raw public_ip > ip.txt
+        IP=$(cat ip.txt | tr -d '[:space:]')
         echo "VM_HOST=$IP" >> $GITHUB_ENV
 
     # ==========================================
-    # STEP 12: DEPLOY APPLICATION TO EC2
+    # STEP 12: Deploy to EC2 via SSH
     # ==========================================
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v1.0.0
@@ -120,9 +120,9 @@ jobs:
           docker run -d -p 3000:3000 --name app ${{ secrets.DOCKER_USERNAME }}/cicd-app
 
     # ==========================================
-    # STEP 13: PRODUCTION HEALTH CHECK
+    # STEP 13: Health Check (Production)
     # ==========================================
     - name: Health Check
       run: |
         sleep 10
-        curl -f http://${{ env.VM_HOST }}:3000/health || exit 1
+        curl -f http://${{ env.VM_HOST }}:3000/health
