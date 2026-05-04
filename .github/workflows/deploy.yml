@@ -1,13 +1,14 @@
 # ==========================================
 # FILE: .github/workflows/deploy.yml
-# PURPOSE: CI/CD Pipeline for Build, Test, Terraform Provisioning, and Deployment
+# PURPOSE: End-to-End CI/CD Pipeline
 # DESCRIPTION:
-# This workflow:
-# 1. Builds and tests the Node.js app
-# 2. Builds & pushes Docker image
-# 3. Provisions infrastructure using Terraform
-# 4. Dynamically retrieves EC2 public IP
-# 5. Deploys container via SSH
+# - Build & test Node.js app
+# - Build & push Docker image
+# - Provision infrastructure via Terraform
+# - Dynamically retrieve EC2 public IP
+# - Wait for EC2 readiness
+# - Deploy container via SSH
+# - Perform health check
 # ==========================================
 
 name: CI/CD Pipeline
@@ -30,7 +31,7 @@ jobs:
       uses: actions/checkout@v3
 
     # ==========================================
-    # STEP 2: Setup Node.js Environment
+    # STEP 2: Setup Node.js
     # ==========================================
     - name: Setup Node.js
       uses: actions/setup-node@v3
@@ -95,7 +96,7 @@ jobs:
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
     # ==========================================
-    # STEP 11: Get EC2 Public IP (FIXED)
+    # STEP 11: Get EC2 Public IP
     # ==========================================
     - name: Get EC2 Public IP
       working-directory: terraform
@@ -105,7 +106,21 @@ jobs:
         echo "VM_HOST=$IP" >> $GITHUB_ENV
 
     # ==========================================
-    # STEP 12: Deploy to EC2 via SSH
+    # STEP 12: Wait for EC2 SSH Readiness
+    # ==========================================
+    - name: Wait for EC2 SSH
+      run: |
+        echo "Waiting for EC2 to be ready..."
+        for i in {1..12}; do
+          nc -zv ${{ env.VM_HOST }} 22 && echo "SSH is ready" && exit 0
+          echo "Still waiting for SSH..."
+          sleep 10
+        done
+        echo "SSH not ready after waiting"
+        exit 1
+
+    # ==========================================
+    # STEP 13: Deploy to EC2 via SSH
     # ==========================================
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v1.0.0
@@ -120,7 +135,7 @@ jobs:
           docker run -d -p 3000:3000 --name app ${{ secrets.DOCKER_USERNAME }}/cicd-app
 
     # ==========================================
-    # STEP 13: Health Check (Production)
+    # STEP 14: Health Check (Production)
     # ==========================================
     - name: Health Check
       run: |
