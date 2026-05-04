@@ -1,6 +1,6 @@
 # ==========================================================
 # FILE: terraform/variables.tf
-# PURPOSE: Variable Definitions
+# PURPOSE: Variables ONLY
 # ==========================================================
 
 variable "aws_region" {

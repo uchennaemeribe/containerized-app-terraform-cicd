@@ -1,6 +1,6 @@
 # ==========================================================
 # FILE: terraform/main.tf
-# PURPOSE: AWS Infrastructure Provisioning
+# PURPOSE: AWS Infrastructure Resources ONLY
 # ==========================================================
 
 terraform {
@@ -15,45 +15,20 @@ terraform {
   }
 }
 
-# ==========================================================
-# PROVIDER CONFIGURATION
-# ==========================================================
-
 provider "aws" {
   region = var.aws_region
 }
 
-# ==========================================================
-# VARIABLES
-# ==========================================================
-
-variable "aws_region" {
-  description = "AWS deployment region"
-  type        = string
-}
-
-variable "instance_type" {
-  description = "EC2 instance type"
-  type        = string
-}
-
-variable "public_key" {
-  description = "SSH public key"
-  type        = string
-}
-
-# ==========================================================
-# RANDOM SUFFIX (PREVENT NAME COLLISIONS)
-# ==========================================================
-
+# ----------------------------------------------------------
+# RANDOM SUFFIX (PREVENT NAME COLLISION)
+# ----------------------------------------------------------
 resource "random_id" "suffix" {
   byte_length = 2
 }
 
-# ==========================================================
-# FETCH LATEST UBUNTU AMI (REGION-AWARE)
-# ==========================================================
-
+# ----------------------------------------------------------
+# FETCH LATEST UBUNTU AMI
+# ----------------------------------------------------------
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -70,24 +45,22 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# ==========================================================
+# ----------------------------------------------------------
 # SSH KEY PAIR
-# ==========================================================
-
+# ----------------------------------------------------------
 resource "aws_key_pair" "deployer" {
   key_name   = "cicd-key-${random_id.suffix.hex}"
   public_key = var.public_key
 }
 
-# ==========================================================
+# ----------------------------------------------------------
 # SECURITY GROUP
-# ==========================================================
-
+# ----------------------------------------------------------
 resource "aws_security_group" "app_sg" {
   name = "cicd-sg-${random_id.suffix.hex}"
 
   ingress {
-    description = "SSH Access"
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -95,7 +68,7 @@ resource "aws_security_group" "app_sg" {
   }
 
   ingress {
-    description = "Application Port"
+    description = "App Port"
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
@@ -103,7 +76,6 @@ resource "aws_security_group" "app_sg" {
   }
 
   egress {
-    description = "Allow All Outbound"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -111,10 +83,9 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
-# ==========================================================
+# ----------------------------------------------------------
 # EC2 INSTANCE
-# ==========================================================
-
+# ----------------------------------------------------------
 resource "aws_instance" "vm" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
@@ -134,12 +105,4 @@ resource "aws_instance" "vm" {
   tags = {
     Name = "cicd-instance"
   }
-}
-
-# ==========================================================
-# OUTPUTS
-# ==========================================================
-
-output "public_ip" {
-  value = aws_instance.vm.public_ip
 }
