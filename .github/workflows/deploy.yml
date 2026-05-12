@@ -1,22 +1,16 @@
-# ==========================================
+# ==========================================================
 # FILE: .github/workflows/deploy.yml
-# PURPOSE: End-to-End CI/CD Pipeline
-# DESCRIPTION:
-# - Build and test Node.js application
-# - Build and push Docker image to Docker Hub
-# - Provision EC2 infrastructure using Terraform
-# - Retrieve dynamic EC2 public IP
-# - Deploy container securely via SSH
-# ==========================================
-
-# ==========================================
-# CI/CD PIPELINE CONFIGURATION
-# ==========================================
+# PURPOSE:
+# Dynamic Infrastructure Recovery Pipeline
+# ==========================================================
 
 name: Dynamic Recovery Pipeline
 
 on:
-  workflow_dispatch:
+
+  push:
+    branches:
+      - main
 
 jobs:
 
@@ -26,109 +20,155 @@ jobs:
 
     steps:
 
-    # ==========================================
-    # CHECKOUT
-    # ==========================================
+    # ======================================================
+    # CHECKOUT REPOSITORY
+    # ======================================================
 
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    # ==========================================
+    # ======================================================
     # INSTALL NODE DEPENDENCIES
-    # ==========================================
+    # ======================================================
 
     - name: Install Dependencies
       run: npm install
 
-    # ==========================================
-    # RUN HEALTH TEST
-    # ==========================================
+    # ======================================================
+    # APPLICATION HEALTH TEST
+    # ======================================================
 
-    - name: Run Tests
+    - name: Run Health Test
       run: |
         node app.js &
         sleep 5
         curl -f http://localhost:3000/health
 
-    # ==========================================
-    # BUILD IMAGE
-    # ==========================================
+    # ======================================================
+    # DOCKER BUILD
+    # ======================================================
 
     - name: Build Docker Image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app .
-
-    # ==========================================
-    # DOCKER LOGIN
-    # ==========================================
-
-    - name: Docker Login
       run: |
-        echo "${{ secrets.DOCKER_PASSWORD }}" | \
-        docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        docker build \
+        -t ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app .
 
-    # ==========================================
+    # ======================================================
+    # DOCKER LOGIN
+    # ======================================================
+
+    - name: Login to DockerHub
+      run: |
+        echo "${{ secrets.DOCKER_PASSWORD }}" \
+        | docker login \
+        -u "${{ secrets.DOCKER_USERNAME }}" \
+        --password-stdin
+
+    # ======================================================
     # PUSH IMAGE
-    # ==========================================
+    # ======================================================
 
     - name: Push Docker Image
       run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app
+        docker push \
+        ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app
 
-    # ==========================================
-    # SETUP TERRAFORM
-    # ==========================================
+    # ======================================================
+    # TERRAFORM SETUP
+    # ======================================================
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
-    # ==========================================
+    # ======================================================
     # TERRAFORM INIT
-    # ==========================================
+    # ======================================================
 
     - name: Terraform Init
       working-directory: terraform
       run: terraform init
 
-    # ==========================================
+    # ======================================================
     # TERRAFORM APPLY
-    # ==========================================
+    # ======================================================
 
     - name: Terraform Apply
       working-directory: terraform
+
       run: |
         terraform apply \
         -auto-approve \
         -var="public_key=${{ secrets.VM_PUBLIC_KEY }}"
+
       env:
+
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
-    # ==========================================
-    # RETRIEVE DYNAMIC PUBLIC IP
-    # ==========================================
+    # ======================================================
+    # GET DYNAMIC PUBLIC IP
+    # ======================================================
 
-    - name: Get Dynamic Public IP
+    - name: Retrieve Dynamic Public IP
+
       id: ec2_ip
+
       working-directory: terraform
+
       run: |
         echo "ip=$(terraform output -raw public_ip)" >> $GITHUB_OUTPUT
 
-    # ==========================================
-    # WAIT FOR INSTANCE
-    # ==========================================
+    # ======================================================
+    # STORE SSH PRIVATE KEY
+    # ======================================================
+
+    - name: Configure SSH Key
+
+      run: |
+
+        mkdir -p ~/.ssh
+
+        echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_rsa
+
+        chmod 600 ~/.ssh/id_rsa
+
+    # ======================================================
+    # WAIT FOR INSTANCE READINESS
+    # ======================================================
 
     - name: Wait for Instance Readiness
-      run: |
-        chmod +x scripts/wait-for-instance.sh
-        scripts/wait-for-instance.sh \
-        ${{ steps.ec2_ip.outputs.ip }}
 
-    # ==========================================
-    # DEPLOY APPLICATION
-    # ==========================================
+      run: |
+
+        echo "Waiting for EC2 initialization..."
+
+        for i in {1..30}; do
+
+          ssh \
+          -o StrictHostKeyChecking=no \
+          -i ~/.ssh/id_rsa \
+          ubuntu@${{ steps.ec2_ip.outputs.ip }} \
+          "echo EC2 READY" && exit 0
+
+          echo "Still waiting for EC2..."
+
+          sleep 15
+
+        done
+
+        echo "Instance failed readiness checks"
+
+        exit 1
+
+    # ======================================================
+    # DEPLOY CONTAINER
+    # ======================================================
 
     - name: Deploy Container
+
       uses: appleboy/ssh-action@v1.0.3
 
       with:
@@ -146,15 +186,11 @@ jobs:
           sudo docker rm app || true
 
           sudo docker pull \
-
           ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app
 
           sudo docker run -d \
-
           -p 3000:3000 \
-
           --name app \
-
           ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app
 
           sudo docker ps

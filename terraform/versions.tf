@@ -1,4 +1,11 @@
+# ==========================================================
+# FILE: terraform/versions.tf
+# PURPOSE:
+# Terraform Version & Provider Locking
+# ==========================================================
+
 terraform {
+
   required_version = ">= 1.5.0"
 
   required_providers {
@@ -9,7 +16,7 @@ terraform {
     }
 
     random = {
-      source = "hashicorp/random"
+      source  = "hashicorp/random"
       version = "~> 3.5"
     }
   }
