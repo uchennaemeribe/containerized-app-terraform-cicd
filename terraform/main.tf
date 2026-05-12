@@ -1,14 +1,13 @@
 # ==========================================================
 # FILE: terraform/main.tf
 # PURPOSE:
-# Dynamic Ephemeral Infrastructure Provisioning
-# ----------------------------------------------------------
-# This configuration:
-# - Creates temporary AWS infrastructure
-# - Supports full terraform destroy cleanup
-# - Enables infrastructure recovery through CI/CD
-# - Injects SSH public key dynamically
-# - Creates EC2 instance for Docker deployment
+# Dynamic EC2 Infrastructure Provisioning
+#
+# FEATURES:
+# - Dynamic public IP allocation
+# - Docker auto-installation
+# - Ephemeral infrastructure
+# - Zero persistent AWS resource strategy
 # ==========================================================
 
 # ==========================================================
@@ -20,8 +19,7 @@ provider "aws" {
 }
 
 # ==========================================================
-# RANDOM SUFFIX
-# Prevents resource name collisions
+# RANDOM RESOURCE SUFFIX
 # ==========================================================
 
 resource "random_id" "suffix" {
@@ -30,7 +28,6 @@ resource "random_id" "suffix" {
 
 # ==========================================================
 # UBUNTU AMI
-# Fetch latest Ubuntu 22.04 image dynamically
 # ==========================================================
 
 data "aws_ami" "ubuntu" {
@@ -41,10 +38,7 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-
-    values = [
-      "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
-    ]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
   }
 
   filter {
@@ -55,12 +49,11 @@ data "aws_ami" "ubuntu" {
 
 # ==========================================================
 # SSH KEY PAIR
-# Public key injected into EC2
 # ==========================================================
 
 resource "aws_key_pair" "deployer" {
 
-  key_name = "dynamic-key-${random_id.suffix.hex}"
+  key_name = "dynamic-recovery-key-${random_id.suffix.hex}"
 
   public_key = var.public_key
 }
@@ -71,50 +64,41 @@ resource "aws_key_pair" "deployer" {
 
 resource "aws_security_group" "app_sg" {
 
-  name = "dynamic-sg-${random_id.suffix.hex}"
+  name = "dynamic-recovery-sg-${random_id.suffix.hex}"
 
-  description = "Security group for dynamic recovery pipeline"
-
-  # --------------------------------------------------------
-  # SSH
-  # --------------------------------------------------------
+  description = "Managed by Terraform"
 
   ingress {
 
     description = "SSH"
 
     from_port = 22
-    to_port   = 22
+
+    to_port = 22
 
     protocol = "tcp"
 
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  # --------------------------------------------------------
-  # APPLICATION PORT
-  # --------------------------------------------------------
 
   ingress {
 
-    description = "Application"
+    description = "Application Port"
 
     from_port = 3000
-    to_port   = 3000
+
+    to_port = 3000
 
     protocol = "tcp"
 
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  # --------------------------------------------------------
-  # OUTBOUND TRAFFIC
-  # --------------------------------------------------------
 
   egress {
 
     from_port = 0
-    to_port   = 0
+
+    to_port = 0
 
     protocol = "-1"
 
@@ -142,23 +126,20 @@ resource "aws_instance" "vm" {
     aws_security_group.app_sg.id
   ]
 
-  # --------------------------------------------------------
-  # USER DATA
-  # Automatically installs Docker
-  # --------------------------------------------------------
+  associate_public_ip_address = true
 
   user_data = <<-EOF
               #!/bin/bash
 
               apt update -y
 
-              apt install -y docker.io
+              apt install docker.io -y
 
-              systemctl enable docker
               systemctl start docker
 
-              usermod -aG docker ubuntu
+              systemctl enable docker
 
+              usermod -aG docker ubuntu
               EOF
 
   tags = {

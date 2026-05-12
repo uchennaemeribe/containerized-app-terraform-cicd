@@ -1,7 +1,7 @@
 # ==========================================================
 # FILE: terraform/versions.tf
 # PURPOSE:
-# Terraform Version & Provider Locking
+# Terraform + Provider Version Control
 # ==========================================================
 
 terraform {
@@ -11,12 +11,16 @@ terraform {
   required_providers {
 
     aws = {
-      source  = "hashicorp/aws"
+
+      source = "hashicorp/aws"
+
       version = "~> 5.0"
     }
 
     random = {
-      source  = "hashicorp/random"
+
+      source = "hashicorp/random"
+
       version = "~> 3.5"
     }
   }

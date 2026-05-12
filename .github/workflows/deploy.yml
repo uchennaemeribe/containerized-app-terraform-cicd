@@ -1,13 +1,20 @@
 # ==========================================================
 # FILE: .github/workflows/deploy.yml
 # PURPOSE:
-# Dynamic Infrastructure Recovery Pipeline
+# Dynamic Infrastructure Recovery CI/CD Pipeline
+#
+# FEATURES:
+# - Builds Docker image
+# - Pushes image to Docker Hub
+# - Dynamically provisions EC2 via Terraform
+# - Waits for EC2 + Docker readiness
+# - Deploys container automatically
+# - Supports full terraform destroy recovery workflow
 # ==========================================================
 
 name: Dynamic Recovery Pipeline
 
 on:
-
   push:
     branches:
       - main
@@ -15,160 +22,158 @@ on:
 jobs:
 
   deploy:
-
+    name: Build Provision Deploy
     runs-on: ubuntu-latest
 
     steps:
 
-    # ======================================================
-    # CHECKOUT REPOSITORY
-    # ======================================================
+    # ==========================================================
+    # STEP 1 — CHECKOUT REPOSITORY
+    # ==========================================================
 
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    # ======================================================
-    # INSTALL NODE DEPENDENCIES
-    # ======================================================
+    # ==========================================================
+    # STEP 2 — INSTALL NODE DEPENDENCIES
+    # ==========================================================
 
     - name: Install Dependencies
       run: npm install
 
-    # ======================================================
-    # APPLICATION HEALTH TEST
-    # ======================================================
+    # ==========================================================
+    # STEP 3 — APPLICATION HEALTH TEST
+    # ==========================================================
 
-    - name: Run Health Test
+    - name: Run Health Check Test
       run: |
         node app.js &
         sleep 5
         curl -f http://localhost:3000/health
 
-    # ======================================================
-    # DOCKER BUILD
-    # ======================================================
+    # ==========================================================
+    # STEP 4 — BUILD DOCKER IMAGE
+    # ==========================================================
 
     - name: Build Docker Image
       run: |
         docker build \
         -t ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app .
 
-    # ======================================================
-    # DOCKER LOGIN
-    # ======================================================
+    # ==========================================================
+    # STEP 5 — LOGIN TO DOCKER HUB
+    # ==========================================================
 
-    - name: Login to DockerHub
+    - name: Docker Hub Login
       run: |
-        echo "${{ secrets.DOCKER_PASSWORD }}" \
-        | docker login \
+        echo "${{ secrets.DOCKER_PASSWORD }}" | \
+        docker login \
         -u "${{ secrets.DOCKER_USERNAME }}" \
         --password-stdin
 
-    # ======================================================
-    # PUSH IMAGE
-    # ======================================================
+    # ==========================================================
+    # STEP 6 — PUSH IMAGE TO DOCKER HUB
+    # ==========================================================
 
     - name: Push Docker Image
       run: |
         docker push \
         ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app
 
-    # ======================================================
-    # TERRAFORM SETUP
-    # ======================================================
+    # ==========================================================
+    # STEP 7 — SETUP TERRAFORM
+    # ==========================================================
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
-    # ======================================================
-    # TERRAFORM INIT
-    # ======================================================
+    # ==========================================================
+    # STEP 8 — TERRAFORM INIT
+    # ==========================================================
 
     - name: Terraform Init
       working-directory: terraform
       run: terraform init
 
-    # ======================================================
-    # TERRAFORM APPLY
-    # ======================================================
+    # ==========================================================
+    # STEP 9 — TERRAFORM VALIDATE
+    # ==========================================================
+
+    - name: Terraform Validate
+      working-directory: terraform
+      run: terraform validate
+
+    # ==========================================================
+    # STEP 10 — TERRAFORM APPLY
+    # ==========================================================
 
     - name: Terraform Apply
       working-directory: terraform
-
       run: |
         terraform apply \
         -auto-approve \
         -var="public_key=${{ secrets.VM_PUBLIC_KEY }}"
-
       env:
-
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
-    # ======================================================
-    # GET DYNAMIC PUBLIC IP
-    # ======================================================
+    # ==========================================================
+    # STEP 11 — RETRIEVE EC2 PUBLIC IP
+    # ==========================================================
 
-    - name: Retrieve Dynamic Public IP
-
+    - name: Retrieve EC2 Public IP
       id: ec2_ip
-
       working-directory: terraform
-
       run: |
         echo "ip=$(terraform output -raw public_ip)" >> $GITHUB_OUTPUT
 
-    # ======================================================
-    # STORE SSH PRIVATE KEY
-    # ======================================================
+    # ==========================================================
+    # STEP 12 — CONFIGURE SSH KEY
+    # ==========================================================
 
     - name: Configure SSH Key
-
       run: |
-
         mkdir -p ~/.ssh
 
-        echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/temp_key
 
-        chmod 600 ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/temp_key
 
-    # ======================================================
-    # WAIT FOR INSTANCE READINESS
-    # ======================================================
+    # ==========================================================
+    # STEP 13 — WAIT FOR INSTANCE + DOCKER READINESS
+    # ==========================================================
 
     - name: Wait for Instance Readiness
-
       run: |
 
-        echo "Waiting for EC2 initialization..."
+        echo "Waiting for EC2 + Docker readiness..."
 
         for i in {1..30}; do
 
           ssh \
           -o StrictHostKeyChecking=no \
-          -i ~/.ssh/id_rsa \
+          -i ~/.ssh/temp_key \
           ubuntu@${{ steps.ec2_ip.outputs.ip }} \
-          "echo EC2 READY" && exit 0
+          "docker --version" && break
 
-          echo "Still waiting for EC2..."
+          echo "Docker not ready yet..."
 
           sleep 15
 
         done
 
-        echo "Instance failed readiness checks"
+        ssh \
+        -o StrictHostKeyChecking=no \
+        -i ~/.ssh/temp_key \
+        ubuntu@${{ steps.ec2_ip.outputs.ip }} \
+        "docker --version"
 
-        exit 1
-
-    # ======================================================
-    # DEPLOY CONTAINER
-    # ======================================================
+    # ==========================================================
+    # STEP 14 — DEPLOY CONTAINER
+    # ==========================================================
 
     - name: Deploy Container
-
       uses: appleboy/ssh-action@v1.0.3
 
       with:
@@ -194,3 +199,12 @@ jobs:
           ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app
 
           sudo docker ps
+
+    # ==========================================================
+    # STEP 15 — DISPLAY APPLICATION URL
+    # ==========================================================
+
+    - name: Display Live URL
+      run: |
+        echo "Application URL:"
+        echo "http://${{ steps.ec2_ip.outputs.ip }}:3000"

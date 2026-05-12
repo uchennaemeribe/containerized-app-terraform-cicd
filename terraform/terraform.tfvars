@@ -1,7 +1,7 @@
 # ==========================================================
 # FILE: terraform/terraform.tfvars
 # PURPOSE:
-# Environment-specific values
+# Terraform Environment Configuration
 # ==========================================================
 
 aws_region = "us-east-1"

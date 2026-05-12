@@ -1,7 +1,7 @@
 # ==========================================================
 # FILE: terraform/variables.tf
 # PURPOSE:
-# Centralized Terraform Variables
+# Terraform Variables
 # ==========================================================
 
 variable "aws_region" {
