@@ -4,16 +4,13 @@
 # ==========================================================
 
 variable "aws_region" {
-  description = "AWS region"
-  type        = string
+  type = string
 }
 
 variable "instance_type" {
-  description = "EC2 instance type"
-  type        = string
+  type = string
 }
 
 variable "public_key" {
-  description = "SSH public key"
-  type        = string
+  type = string
 }

@@ -13,35 +13,37 @@
 # CI/CD PIPELINE CONFIGURATION
 # ==========================================
 
-name: Deploy Application
+name: Dynamic Recovery Pipeline
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
+
   deploy:
-    name: Build, Provision & Deploy
+
     runs-on: ubuntu-latest
 
     steps:
 
     # ==========================================
-    # STEP 1: Checkout Repository
+    # CHECKOUT
     # ==========================================
+
     - name: Checkout Repository
       uses: actions/checkout@v4
 
     # ==========================================
-    # STEP 2: Install Dependencies
+    # INSTALL NODE DEPENDENCIES
     # ==========================================
+
     - name: Install Dependencies
       run: npm install
 
     # ==========================================
-    # STEP 3: Run Tests
+    # RUN HEALTH TEST
     # ==========================================
+
     - name: Run Tests
       run: |
         node app.js &
@@ -49,111 +51,110 @@ jobs:
         curl -f http://localhost:3000/health
 
     # ==========================================
-    # STEP 4: Build Docker Image
+    # BUILD IMAGE
     # ==========================================
+
     - name: Build Docker Image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/cicd-app .
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app .
 
     # ==========================================
-    # STEP 5: Docker Login
+    # DOCKER LOGIN
     # ==========================================
-    - name: Login to Docker Hub
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Docker Login
+      run: |
+        echo "${{ secrets.DOCKER_PASSWORD }}" | \
+        docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
     # ==========================================
-    # STEP 6: Push Image
+    # PUSH IMAGE
     # ==========================================
+
     - name: Push Docker Image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/cicd-app
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app
 
     # ==========================================
-    # STEP 7: Terraform Setup
+    # SETUP TERRAFORM
     # ==========================================
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
     # ==========================================
-    # STEP 8: Terraform Init
+    # TERRAFORM INIT
     # ==========================================
+
     - name: Terraform Init
       working-directory: terraform
-      run: terraform init -upgrade
+      run: terraform init
 
     # ==========================================
-    # STEP 9: Terraform Apply
+    # TERRAFORM APPLY
     # ==========================================
+
     - name: Terraform Apply
       working-directory: terraform
-      run: terraform apply -auto-approve -var="public_key=${{ secrets.VM_PUBLIC_KEY }}"
+      run: |
+        terraform apply \
+        -auto-approve \
+        -var="public_key=${{ secrets.VM_PUBLIC_KEY }}"
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
     # ==========================================
-    # STEP 10: Get EC2 Public IP
+    # RETRIEVE DYNAMIC PUBLIC IP
     # ==========================================
-    - name: Get EC2 Public IP
+
+    - name: Get Dynamic Public IP
       id: ec2_ip
       working-directory: terraform
-      run: echo "ip=$(terraform output -raw public_ip)" >> $GITHUB_OUTPUT
-
-    # ==========================================
-    # STEP 11: Wait for SSH
-    # ==========================================
-    - name: Wait for EC2 SSH
       run: |
-        for i in {1..15}; do
-          nc -zv ${{ steps.ec2_ip.outputs.ip }} 22 && exit 0
-          echo "Waiting for SSH..."
-          sleep 10
-        done
-        exit 1
+        echo "ip=$(terraform output -raw public_ip)" >> $GITHUB_OUTPUT
 
     # ==========================================
-    # STEP 12: Deploy (FIXED FOR GOOD)
+    # WAIT FOR INSTANCE
     # ==========================================
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v1.0.0
+
+    - name: Wait for Instance Readiness
+      run: |
+        chmod +x scripts/wait-for-instance.sh
+        scripts/wait-for-instance.sh \
+        ${{ steps.ec2_ip.outputs.ip }}
+
+    # ==========================================
+    # DEPLOY APPLICATION
+    # ==========================================
+
+    - name: Deploy Container
+      uses: appleboy/ssh-action@v1.0.3
+
       with:
+
         host: ${{ steps.ec2_ip.outputs.ip }}
+
         username: ubuntu
+
         key: ${{ secrets.VM_SSH_KEY }}
+
         script: |
 
-          echo "===== WAIT FOR APT LOCK ====="
-          while sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
-            echo "Waiting for apt lock..."
-            sleep 5
-          done
-
-          echo "===== INSTALL DOCKER (OFFICIAL METHOD) ====="
-          if ! command -v docker &> /dev/null; then
-            sudo apt update -y
-            sudo apt install -y ca-certificates curl gnupg
-
-            sudo install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-            sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-            echo \
-              "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-              https://download.docker.com/linux/ubuntu \
-              $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
-              | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-            sudo apt update -y
-            sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-            sudo systemctl start docker
-            sudo systemctl enable docker
-          fi
-
-          echo "===== DEPLOY APP ====="
           sudo docker stop app || true
-          sudo docker rm app || true
-          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/cicd-app
-          sudo docker run -d -p 3000:3000 --name app ${{ secrets.DOCKER_USERNAME }}/cicd-app
 
-          echo "===== VERIFY ====="
+          sudo docker rm app || true
+
+          sudo docker pull \
+
+          ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app
+
+          sudo docker run -d \
+
+          -p 3000:3000 \
+
+          --name app \
+
+          ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app
+
           sudo docker ps

@@ -17,6 +17,8 @@ logs/
 terraform/.terraform/
 terraform/*.tfstate
 terraform/*.tfstate.backup
+terraform.tfstate
+terraform.tfstate.backup
 tfplan
 *.tfplan
 .terraform/
