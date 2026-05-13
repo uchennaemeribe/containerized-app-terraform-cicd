@@ -1,14 +1,4 @@
-# =========================================================
-# FILE: .github/workflows/deploy.yml
-# PURPOSE: Enterprise CI/CD Infrastructure Deployment
-# ARCHITECTURE:
-#   - Terraform Remote Backend (S3 + DynamoDB)
-#   - Dynamic EC2 Provisioning
-#   - Dockerized Application Deployment
-#   - GitHub Actions Automation
-# =========================================================
-
-name: Build Provision Deploy
+name: Provision Infrastructure and Deploy Container
 
 on:
   push:
@@ -17,136 +7,118 @@ on:
 
 jobs:
   deploy:
-    name: Provision Infrastructure and Deploy Container
+    name: Build Provision Deploy
     runs-on: ubuntu-latest
 
     env:
-      TF_VAR_public_key: ${{ secrets.VM_PUBLIC_KEY }}
+      TF_VAR_public_key: ${{ secrets.PUBLIC_KEY }}
 
     steps:
 
-      # =====================================================
-      # STEP 1 — CHECKOUT REPOSITORY
-      # =====================================================
-
+      # =========================================================
+      # CHECKOUT REPOSITORY
+      # =========================================================
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # =====================================================
-      # STEP 2 — CONFIGURE AWS CREDENTIALS
-      # REQUIRED FOR:
-      #   - Terraform Backend Access
-      #   - S3 Remote State
-      #   - DynamoDB Lock Table
-      #   - EC2 Provisioning
-      # =====================================================
-
+      # =========================================================
+      # CONFIGURE AWS AUTHENTICATION
+      # =========================================================
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-1
 
-      # =====================================================
-      # STEP 3 — SETUP TERRAFORM
-      # =====================================================
-
+      # =========================================================
+      # SETUP TERRAFORM
+      # =========================================================
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # =====================================================
-      # STEP 4 — TERRAFORM INIT
-      # INITIALIZES:
-      #   - AWS Provider
-      #   - S3 Backend
-      #   - DynamoDB Locking
-      # =====================================================
-
+      # =========================================================
+      # TERRAFORM INITIALIZATION
+      # =========================================================
       - name: Terraform Init
         working-directory: terraform
         run: terraform init
 
-      # =====================================================
-      # STEP 5 — TERRAFORM VALIDATION
-      # =====================================================
-
+      # =========================================================
+      # TERRAFORM VALIDATION
+      # =========================================================
       - name: Terraform Validate
         working-directory: terraform
         run: terraform validate
 
-      # =====================================================
-      # STEP 6 — TERRAFORM APPLY
-      # PROVISIONS:
-      #   - EC2 Instance
-      #   - Security Group
-      #   - SSH Key Pair
-      # =====================================================
+      # =========================================================
+      # TERRAFORM PLAN
+      # =========================================================
+      - name: Terraform Plan
+        working-directory: terraform
+        run: terraform plan -out=tfplan
 
+      # =========================================================
+      # TERRAFORM APPLY
+      # =========================================================
       - name: Terraform Apply
         working-directory: terraform
-        run: |
-          terraform apply -auto-approve \
-          -var="public_key=${{ secrets.VM_PUBLIC_KEY }}"
+        run: terraform apply -auto-approve tfplan
 
-      # =====================================================
-      # STEP 7 — CAPTURE EC2 PUBLIC IP
-      # =====================================================
-
+      # =========================================================
+      # CAPTURE EC2 PUBLIC IP
+      # =========================================================
       - name: Capture EC2 Public IP
         id: terraform_output
         working-directory: terraform
         run: |
           echo "INSTANCE_IP=$(terraform output -raw instance_public_ip)" >> $GITHUB_ENV
+          echo "INSTANCE_DNS=$(terraform output -raw instance_public_dns)" >> $GITHUB_ENV
 
-      # =====================================================
-      # STEP 8 — WAIT FOR INSTANCE READINESS
-      # =====================================================
+      # =========================================================
+      # SETUP SSH PRIVATE KEY
+      # =========================================================
+      - name: Configure SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PRIVATE_KEY }}" > ~/.ssh/aws_key_pair
+          chmod 600 ~/.ssh/aws_key_pair
 
+      # =========================================================
+      # WAIT FOR EC2 INSTANCE READINESS
+      # =========================================================
       - name: Wait for EC2 Readiness
         run: |
           chmod +x scripts/wait-for-instance.sh
           ./scripts/wait-for-instance.sh "$INSTANCE_IP"
 
-      # =====================================================
-      # STEP 9 — DEPLOY APPLICATION CONTAINER
-      # =====================================================
-
+      # =========================================================
+      # DEPLOY DOCKER CONTAINER
+      # =========================================================
       - name: Deploy Docker Container
-        env:
-          PRIVATE_KEY: ${{ secrets.VM_SSH_KEY }}
         run: |
-
-          echo "$PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
-
-          ssh -o StrictHostKeyChecking=no \
-              -i private_key.pem \
-              azureuser@$INSTANCE_IP << EOF
+          ssh -i ~/.ssh/aws_key_pair \
+            -o StrictHostKeyChecking=no \
+            azureuser@$INSTANCE_IP << 'ENDSSH'
 
             sudo docker stop app || true
             sudo docker rm app || true
 
-            sudo docker pull ${{ github.repository_owner }}/dynamic-recovery-app:latest
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app:latest
 
             sudo docker run -d \
+              -p 80:3000 \
               --name app \
-              -p 3000:3000 \
-              ${{ github.repository_owner }}/dynamic-recovery-app:latest
+              ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app:latest
 
             sudo docker ps
 
-          EOF
+          ENDSSH
 
-      # =====================================================
-      # STEP 10 — DEPLOYMENT SUCCESS MESSAGE
-      # =====================================================
-
+      # =========================================================
+      # DEPLOYMENT VERIFICATION
+      # =========================================================
       - name: Deployment Complete
         run: |
-          echo "========================================="
-          echo "Enterprise Deployment Completed"
-          echo "========================================="
-          echo "Application URL:"
-          echo "http://$INSTANCE_IP:3000"
-          echo "========================================="
+          echo "Application successfully deployed."
+          echo "Public URL: http://$INSTANCE_DNS"
