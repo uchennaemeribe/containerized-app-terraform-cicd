@@ -5,7 +5,7 @@ const app = express();
 const PORT = 3000;
 
 app.get('/', (req, res) => {
-  res.send('🚀 Dynamic Infrastructure Recovery Pipeline Active!');
+  res.send('🚀 Enterprise Dynamic Infrastructure Recovery Pipeline Active!');
 });
 
 app.get('/health', (req, res) => {
