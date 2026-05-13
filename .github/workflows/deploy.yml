@@ -1,29 +1,39 @@
 name: Provision Infrastructure and Deploy Container
 
+# =========================================================
+# PIPELINE TRIGGERS
+# =========================================================
 on:
   push:
     branches:
       - main
 
+# =========================================================
+# JOB DEFINITIONS
+# =========================================================
 jobs:
+
   deploy:
     name: Build Provision Deploy
     runs-on: ubuntu-latest
 
+    # =====================================================
+    # GLOBAL ENVIRONMENT VARIABLES
+    # =====================================================
     env:
       TF_VAR_public_key: ${{ secrets.PUBLIC_KEY }}
 
     steps:
 
-      # =========================================================
-      # CHECKOUT REPOSITORY
-      # =========================================================
+      # =====================================================
+      # CHECKOUT SOURCE CODE
+      # =====================================================
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # =========================================================
+      # =====================================================
       # CONFIGURE AWS AUTHENTICATION
-      # =========================================================
+      # =====================================================
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -31,70 +41,74 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # =========================================================
-      # SETUP TERRAFORM
-      # =========================================================
+      # =====================================================
+      # INSTALL TERRAFORM
+      # =====================================================
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # =========================================================
-      # TERRAFORM INITIALIZATION
-      # =========================================================
+      # =====================================================
+      # INITIALIZE TERRAFORM
+      # =====================================================
       - name: Terraform Init
         working-directory: terraform
         run: terraform init
 
-      # =========================================================
-      # TERRAFORM VALIDATION
-      # =========================================================
+      # =====================================================
+      # VALIDATE TERRAFORM CONFIGURATION
+      # =====================================================
       - name: Terraform Validate
         working-directory: terraform
         run: terraform validate
 
-      # =========================================================
-      # TERRAFORM PLAN
-      # =========================================================
+      # =====================================================
+      # GENERATE TERRAFORM EXECUTION PLAN
+      # =====================================================
       - name: Terraform Plan
         working-directory: terraform
+        env:
+          TF_VAR_public_key: ${{ secrets.PUBLIC_KEY }}
         run: terraform plan -out=tfplan
 
-      # =========================================================
-      # TERRAFORM APPLY
-      # =========================================================
+      # =====================================================
+      # APPLY TERRAFORM INFRASTRUCTURE
+      # =====================================================
       - name: Terraform Apply
         working-directory: terraform
+        env:
+          TF_VAR_public_key: ${{ secrets.PUBLIC_KEY }}
         run: terraform apply -auto-approve tfplan
 
-      # =========================================================
-      # CAPTURE EC2 PUBLIC IP
-      # =========================================================
-      - name: Capture EC2 Public IP
+      # =====================================================
+      # CAPTURE TERRAFORM OUTPUTS
+      # =====================================================
+      - name: Capture EC2 Public Information
         id: terraform_output
         working-directory: terraform
         run: |
           echo "INSTANCE_IP=$(terraform output -raw instance_public_ip)" >> $GITHUB_ENV
           echo "INSTANCE_DNS=$(terraform output -raw instance_public_dns)" >> $GITHUB_ENV
 
-      # =========================================================
-      # SETUP SSH PRIVATE KEY
-      # =========================================================
+      # =====================================================
+      # CONFIGURE SSH PRIVATE KEY
+      # =====================================================
       - name: Configure SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.PRIVATE_KEY }}" > ~/.ssh/aws_key_pair
           chmod 600 ~/.ssh/aws_key_pair
 
-      # =========================================================
-      # WAIT FOR EC2 INSTANCE READINESS
-      # =========================================================
+      # =====================================================
+      # WAIT FOR EC2 INSTANCE INITIALIZATION
+      # =====================================================
       - name: Wait for EC2 Readiness
         run: |
           chmod +x scripts/wait-for-instance.sh
           ./scripts/wait-for-instance.sh "$INSTANCE_IP"
 
-      # =========================================================
-      # DEPLOY DOCKER CONTAINER
-      # =========================================================
+      # =====================================================
+      # DEPLOY CONTAINERIZED APPLICATION
+      # =====================================================
       - name: Deploy Docker Container
         run: |
           ssh -i ~/.ssh/aws_key_pair \
@@ -115,10 +129,14 @@ jobs:
 
           ENDSSH
 
-      # =========================================================
-      # DEPLOYMENT VERIFICATION
-      # =========================================================
+      # =====================================================
+      # VERIFY DEPLOYMENT STATUS
+      # =====================================================
       - name: Deployment Complete
         run: |
-          echo "Application successfully deployed."
-          echo "Public URL: http://$INSTANCE_DNS"
+          echo "=================================================="
+          echo "APPLICATION DEPLOYMENT SUCCESSFUL"
+          echo "=================================================="
+          echo "Public URL:"
+          echo "http://$INSTANCE_DNS"
+          echo "=================================================="
