@@ -1,9 +1,8 @@
-# ==========================================================
+# ============================================================
 # FILE: terraform/versions.tf
 # PURPOSE:
 # Terraform Version + Provider Management
-# Local Terraform State Configuration
-# ==========================================================
+# ============================================================
 
 terraform {
 
@@ -20,7 +19,20 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.5"
     }
-
   }
 
+  # ==========================================================
+  # REMOTE TERRAFORM STATE
+  # ==========================================================
+
+  backend "s3" {
+
+    bucket = "dynamic-recovery-terraform-state"
+
+    key = "global/terraform.tfstate"
+
+    region = "us-east-1"
+
+    encrypt = true
+  }
 }
