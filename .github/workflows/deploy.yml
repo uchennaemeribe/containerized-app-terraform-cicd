@@ -1,56 +1,54 @@
-name: Enterprise Terraform Docker Deployment Pipeline
+# ==========================================================
+# FILE: .github/workflows/deploy.yml
+# PURPOSE:
+# Enterprise CI/CD Pipeline
+# Terraform Infrastructure Provisioning + Docker Deployment
+#
+# FEATURES:
+# - Dynamic EC2 provisioning
+# - Terraform automation
+# - Secure SSH configuration
+# - Dockerized application deployment
+# - Dynamic infrastructure cleanup readiness
+# ==========================================================
 
-# ============================================================
-# WORKFLOW TRIGGERS
-# ============================================================
+name: Build Provision Deploy
 
 on:
   push:
     branches:
       - main
 
-  workflow_dispatch:
-
-# ============================================================
+# ==========================================================
 # GLOBAL ENVIRONMENT VARIABLES
-# ============================================================
+# ==========================================================
 
 env:
   AWS_REGION: us-east-1
   TF_WORKING_DIR: terraform
 
-# ============================================================
-# JOB DEFINITIONS
-# ============================================================
-
 jobs:
-  build-provision-deploy:
-    name: Build Provision Deploy
+
+  # ========================================================
+  # MAIN DEPLOYMENT JOB
+  # ========================================================
+
+  deploy:
+    name: Provision Infrastructure and Deploy Container
     runs-on: ubuntu-latest
-
-    # ========================================================
-    # REQUIRED PERMISSIONS
-    # ========================================================
-
-    permissions:
-      contents: read
-
-    # ========================================================
-    # EXECUTION STEPS
-    # ========================================================
 
     steps:
 
-      # ======================================================
+      # ====================================================
       # CHECKOUT REPOSITORY
-      # ======================================================
+      # ====================================================
 
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # ======================================================
+      # ====================================================
       # CONFIGURE AWS CREDENTIALS
-      # ======================================================
+      # ====================================================
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -59,34 +57,32 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # ======================================================
+      # ====================================================
       # SETUP TERRAFORM
-      # ======================================================
+      # ====================================================
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.8.5
 
-      # ======================================================
+      # ====================================================
       # TERRAFORM INITIALIZATION
-      # ======================================================
+      # ====================================================
 
       - name: Terraform Init
         working-directory: ${{ env.TF_WORKING_DIR }}
-        run: terraform init
+        run: terraform init -reconfigure
 
-      # ======================================================
+      # ====================================================
       # TERRAFORM VALIDATION
-      # ======================================================
+      # ====================================================
 
       - name: Terraform Validate
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform validate
 
-      # ======================================================
+      # ====================================================
       # TERRAFORM PLAN
-      # ======================================================
+      # ====================================================
 
       - name: Terraform Plan
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -97,9 +93,9 @@ jobs:
           -var="public_key=${TF_VAR_public_key}" \
           -out=tfplan
 
-      # ======================================================
+      # ====================================================
       # TERRAFORM APPLY
-      # ======================================================
+      # ====================================================
 
       - name: Terraform Apply
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -110,83 +106,85 @@ jobs:
           -auto-approve \
           tfplan
 
-      # ======================================================
-      # CAPTURE EC2 INSTANCE DETAILS
-      # ======================================================
+      # ====================================================
+      # CAPTURE EC2 INSTANCE INFORMATION
+      # ====================================================
 
       - name: Capture EC2 Public Information
-        id: ec2info
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
           echo "INSTANCE_IP=$(terraform output -raw instance_public_ip)" >> $GITHUB_ENV
           echo "INSTANCE_DNS=$(terraform output -raw instance_public_dns)" >> $GITHUB_ENV
 
-      # ======================================================
+      # ====================================================
       # CONFIGURE SSH PRIVATE KEY
-      # ======================================================
+      # ====================================================
 
       - name: Configure SSH Key
-        shell: bash
         run: |
           mkdir -p ~/.ssh
 
-          cat <<EOF > ~/.ssh/aws_key_pair
-          ${{ secrets.SSH_PRIVATE_KEY }}
-          EOF
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/aws_key_pair
 
           chmod 600 ~/.ssh/aws_key_pair
 
-          ssh-keyscan -H ${{ env.INSTANCE_IP }} >> ~/.ssh/known_hosts
+          for i in {1..10}; do
+            ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts && break
+            echo "Waiting for SSH service..."
+            sleep 10
+          done
 
-      # ======================================================
+      # ====================================================
       # WAIT FOR EC2 INSTANCE INITIALIZATION
-      # ======================================================
+      # ====================================================
 
       - name: Wait for EC2 Readiness
         run: |
           chmod +x scripts/wait-for-instance.sh
-          ./scripts/wait-for-instance.sh "${INSTANCE_IP}"
+          ./scripts/wait-for-instance.sh "$INSTANCE_IP"
 
-      # ======================================================
-      # DEPLOY DOCKER CONTAINER TO EC2
-      # ======================================================
+      # ====================================================
+      # DEPLOY DOCKER CONTAINER
+      # ====================================================
 
       - name: Deploy Docker Container
         run: |
           ssh -i ~/.ssh/aws_key_pair \
             -o StrictHostKeyChecking=no \
-            azureuser@${INSTANCE_IP} << 'EOF'
+            ubuntu@$INSTANCE_IP << 'EOF'
 
             sudo apt-get update -y
 
-            sudo apt-get install docker.io -y
+            sudo apt-get install -y docker.io git
 
             sudo systemctl start docker
-
             sudo systemctl enable docker
 
-            sudo docker stop app || true
+            sudo usermod -aG docker ubuntu
 
-            sudo docker rm app || true
+            git clone https://github.com/${{ github.repository }} app
 
-            sudo docker pull uchennaemeribe/containerized-app:latest
+            cd app
+
+            sudo docker build -t containerized-app .
+
+            sudo docker rm -f containerized-app || true
 
             sudo docker run -d \
-              --name app \
-              -p 80:3000 \
-              uchennaemeribe/containerized-app:latest
-
+              --name containerized-app \
+              -p 3000:3000 \
+              containerized-app
           EOF
 
-      # ======================================================
-      # DEPLOYMENT SUCCESS MESSAGE
-      # ======================================================
+      # ====================================================
+      # DEPLOYMENT COMPLETE
+      # ====================================================
 
       - name: Deployment Complete
         run: |
-          echo "=============================================="
-          echo "APPLICATION DEPLOYMENT SUCCESSFUL"
-          echo "=============================================="
-          echo "EC2 PUBLIC IP: ${INSTANCE_IP}"
-          echo "EC2 PUBLIC DNS: ${INSTANCE_DNS}"
-          echo "=============================================="
+          echo "======================================="
+          echo "DEPLOYMENT SUCCESSFUL"
+          echo "======================================="
+          echo "Application URL:"
+          echo "http://$INSTANCE_IP:3000"
+          echo "======================================="
