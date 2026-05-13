@@ -1,4 +1,4 @@
-# ==========================================================
+# ============================================================
 # FILE: terraform/main.tf
 # PURPOSE:
 # Dynamic EC2 Infrastructure Provisioning
@@ -8,29 +8,30 @@
 # - Docker auto-installation
 # - Ephemeral infrastructure
 # - Zero persistent AWS resource strategy
-# ==========================================================
+# ============================================================
 
-# =========================================================
-# AWS PROVIDER
-# =========================================================
+# ============================================================
+# AWS PROVIDER CONFIGURATION
+# ============================================================
 
 provider "aws" {
   region = var.aws_region
 }
 
-# =========================================================
+# ============================================================
 # RANDOM RESOURCE SUFFIX
-# =========================================================
+# ============================================================
 
 resource "random_id" "suffix" {
   byte_length = 2
 }
 
-# =========================================================
-# UBUNTU AMI
-# =========================================================
+# ============================================================
+# UBUNTU AMI LOOKUP
+# ============================================================
 
 data "aws_ami" "ubuntu" {
+
   most_recent = true
 
   owners = ["099720109477"]
@@ -46,60 +47,89 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# =========================================================
-# SSH KEY PAIR
-# =========================================================
+# ============================================================
+# EC2 SSH KEY PAIR
+# ============================================================
 
 resource "aws_key_pair" "deployer" {
-  key_name   = "dynamic-recovery-key-${random_id.suffix.hex}"
+
+  key_name = "enterprise-deployer-key-${random_id.suffix.hex}"
+
   public_key = var.public_key
+
+  tags = {
+    Name        = "enterprise-deployer-key"
+    Environment = "production"
+    ManagedBy   = "terraform"
+    Project     = "containerized-app"
+  }
 }
 
-# =========================================================
-# SECURITY GROUP
-# =========================================================
+# ============================================================
+# APPLICATION SECURITY GROUP
+# ============================================================
 
 resource "aws_security_group" "app_sg" {
-  name        = "dynamic-recovery-sg-${random_id.suffix.hex}"
-  description = "Security group for dynamic recovery app"
+
+  name = "containerized-app-sg-${random_id.suffix.hex}"
+
+  description = "Security group for containerized application"
 
   ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
+
+    description = "SSH Access"
+
+    from_port = 22
+    to_port   = 22
+    protocol  = "tcp"
+
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    description = "Application"
-    from_port   = 3000
-    to_port     = 3000
-    protocol    = "tcp"
+
+    description = "Application Access"
+
+    from_port = 3000
+    to_port   = 3000
+    protocol  = "tcp"
+
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = {
-    Name = "dynamic-recovery-sg"
+    Name        = "containerized-app-security-group"
+    Environment = "production"
+    ManagedBy   = "terraform"
+    Project     = "containerized-app"
   }
 }
 
-# =========================================================
-# EC2 INSTANCE
-# =========================================================
+# ============================================================
+# EC2 APPLICATION SERVER
+# ============================================================
 
 resource "aws_instance" "app_server" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = var.instance_type
-  key_name                    = aws_key_pair.deployer.key_name
-  vpc_security_group_ids      = [aws_security_group.app_sg.id]
+
+  ami = data.aws_ami.ubuntu.id
+
+  instance_type = var.instance_type
+
+  key_name = aws_key_pair.deployer.key_name
+
+  vpc_security_group_ids = [
+    aws_security_group.app_sg.id
+  ]
+
   associate_public_ip_address = true
 
   user_data = <<-EOF
@@ -120,6 +150,9 @@ resource "aws_instance" "app_server" {
               EOF
 
   tags = {
-    Name = "dynamic-recovery-instance"
+    Name        = "containerized-app-server"
+    Environment = "production"
+    ManagedBy   = "terraform"
+    Project     = "containerized-app"
   }
 }
