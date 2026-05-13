@@ -8,9 +8,7 @@ for i in {1..30}
 
 do
 
-  ssh -o StrictHostKeyChecking=no \
-  azureuser@$IP \
-  "docker --version" && exit 0
+  ssh -i ~/.ssh/aws_key_pair -o StrictHostKeyChecking=no azureuser@$IP "docker --version" && exit 0
 
   echo "Waiting for Docker installation..."
 
