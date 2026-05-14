@@ -13,7 +13,7 @@ const PORT = 3000;
 // 🌐 Root Endpoint
 // =========================================
 app.get('/', (req, res) => {
-  res.send('🚀 Dynamic Infrastructure Full Recovery Pipeline Active!');
+  res.send('🚀 Dynamic Infrastructure Full Recovery Pipeline Actived By Group 4 and Inspired By Mrs Mary Ajayi!');
 });
 // =========================================
 // ❤️ Health Check Endpoint

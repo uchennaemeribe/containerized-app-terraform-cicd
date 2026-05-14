@@ -2088,6 +2088,7 @@ GitHub Actions automatically:
 ✔ Deploys Docker Container  
 ✔ Restores Domain Automatically  
 
+![Infrastructure Reactivation](screenshots/infrastructure-reactivation.png)
 ---
 
 # ⚙️ STEP 37 — VERIFY AUTOMATIC DOMAIN RECOVERY
