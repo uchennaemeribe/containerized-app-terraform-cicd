@@ -13,7 +13,7 @@ const PORT = 3000;
 // 🌐 Root Endpoint
 // =========================================
 app.get('/', (req, res) => {
-  res.send('🚀 Dynamic Infrastructure Recovery Pipeline Active!');
+  res.send('🚀 Dynamic Infrastructure Full Recovery Pipeline Active!');
 });
 // =========================================
 // ❤️ Health Check Endpoint

@@ -1,6 +1,4 @@
-# =====================================================================================================================
 # 🚀 DYNAMIC INFRASTRUCTURE RECOVERY PIPELINE
-# =====================================================================================================================
 
 # PROJECT TITLE
 Dynamic Infrastructure Recovery Pipeline with Terraform, Docker, GitHub Actions, AWS EC2, Route53, and Automatic DNS Recovery
@@ -31,9 +29,8 @@ Ephemeral Infrastructure + Dynamic DNS Recovery + Zero Idle Cost Architecture
 
 ---
 
-# =====================================================================================================================
 # 📌 PROJECT OVERVIEW
-# =====================================================================================================================
+
 
 This project demonstrates:
 
@@ -80,9 +77,8 @@ INCLUDING:
 
 ---
 
-# =====================================================================================================================
 # 🔥 COMPLETE ENTERPRISE EXECUTION FLOW
-# =====================================================================================================================
+
 
 ```text
 Developer Push
@@ -118,9 +114,8 @@ Domain Automatically Restored
 
 ---
 
-# =====================================================================================================================
 # 📌 PROJECT STRUCTURE
-# =====================================================================================================================
+
 
 ```text
 containerized-app-terraform-cicd/
@@ -156,13 +151,10 @@ containerized-app-terraform-cicd/
 
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 1 — INSTALL REQUIRED TOOLS
-# =====================================================================================================================
 
-# ---------------------------------------------------------
 # INSTALL NODE.JS
-# ---------------------------------------------------------
+
 
 ## MacOS
 
@@ -188,9 +180,7 @@ v22.x.x
 
 ---
 
-# ---------------------------------------------------------
 # INSTALL DOCKER DESKTOP
-# ---------------------------------------------------------
 
 Download:
 
@@ -218,9 +208,8 @@ Docker version 27.x.x
 
 ---
 
-# ---------------------------------------------------------
 # INSTALL TERRAFORM
-# ---------------------------------------------------------
+
 
 1. Run to install:
 
@@ -253,9 +242,7 @@ Terraform v1.5.x
 
 ---
 
-# ---------------------------------------------------------
 # INSTALL AWS CLI
-# ---------------------------------------------------------
 
 Install:
 
@@ -273,9 +260,8 @@ aws --version
 
 ---
 
-# ---------------------------------------------------------
 # INSTALL GITHUB CLI
-# ---------------------------------------------------------
+
 
 1. Install:
 
@@ -299,9 +285,8 @@ brew upgrade gh
 ![GitHub CLI Upgrade](screenshots/gh-upgrade.png)
 ---
 
-# ---------------------------------------------------------
 # INSTALL GRAPHVIZ
-# ---------------------------------------------------------
+
 
 Install:
 
@@ -317,9 +302,8 @@ dot -V
 ![GitHub CLI Installation Verification](screenshots/graphviz-installation-verification.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 2 — CONFIGURE AWS
-# =====================================================================================================================
+
 
 Run:
 
@@ -355,9 +339,7 @@ aws sts get-caller-identity
 
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 3 — GENERATE SSH KEYS
-# =====================================================================================================================
 
 Generate keys:
 
@@ -382,9 +364,7 @@ id_rsa.pub
 ![AWS Authentication Verification](screenshots/keys-generation-and-verification-status.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 4 — CREATE PROJECT DIRECTORY
-# =====================================================================================================================
 
 ```bash
 mkdir containerized-app-terraform-cicd
@@ -394,9 +374,7 @@ cd containerized-app-terraform-cicd
 ![Project Directory Creation](screenshots/project-directory-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 5 — INITIALIZE NODE PROJECT
-# =====================================================================================================================
 
 ```bash
 npm init -y
@@ -406,9 +384,7 @@ npm install express
 ![Node Project Initialization](screenshots/node-project-initialization.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 6 — CREATE PROJECT STRUCTURE
-# =====================================================================================================================
 
 1. Create directories:
 
@@ -463,10 +439,8 @@ tree -L 3 -I "node_modules|.git|.terraform"
 ![Project Structure Verification](screenshots/project-structure-verification.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 7 — CREATE EXPRESS APPLICATION
 # FILE: app.js
-# =====================================================================================================================
 
 1. Open:
 
@@ -521,10 +495,8 @@ ENTER
 ![Express Application Creation](screenshots/express-application-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 8 — UPDATE package.json
 # FILE: package.json
-# =====================================================================================================================
 
 1. Open:
 
@@ -560,10 +532,8 @@ ENTER
 ![Updated Package.json File](screenshots/updated-package.json.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 9 — CREATE ecosystem.config.js
 # FILE: ecosystem.config.js
-# =====================================================================================================================
 
 1. Open:
 
@@ -601,9 +571,7 @@ ENTER
 ![Ecosystem.config.js Creation](screenshots/ecosystem.config.js-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 10 — TEST APPLICATION
-# =====================================================================================================================
 
 1. Start application:
 
@@ -641,10 +609,8 @@ curl http://localhost:3000/health
 ![Health Endpoint Testing](screenshots/health-endpoint-testing.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 11 — CREATE Dockerfile
 # FILE: Dockerfile
-# =====================================================================================================================
 
 1. Open:
 
@@ -696,10 +662,8 @@ CMD ["node", "app.js"]
 ![Dockerfile Creation](screenshots/dockerfile-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 12 — CREATE .dockerignore
 # FILE: .dockerignore
-# =====================================================================================================================
 
 Open:
 
@@ -720,18 +684,16 @@ terraform
 ![Created .Dockerignore File](screenshots/created.dockerignore.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 13 — CREATE .gitignore
 # FILE: .gitignore
-# =====================================================================================================================
 
-Open:
+1. Open:
 
 ```bash
 nano .gitignore
 ```
 
-Paste:
+2. Paste:
 
 ```text
 # Node.js
@@ -781,9 +743,7 @@ docker-compose.override.yml
 ![Creation of .Gitignore File](screenshots/created.gitignore-file.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 14 — BUILD DOCKER IMAGE
-# =====================================================================================================================
 
 1. Build image:
 
@@ -807,9 +767,7 @@ curl http://localhost:3000/health
 ![Docker Container Created Image Verification](screenshots/docker-image-verification.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 15 — LOGIN TO DOCKER HUB
-# =====================================================================================================================
 
 1. Login:
 
@@ -862,13 +820,9 @@ e. The browser can be used to verify the existence of the pushed tagged dockerhu
 ![Docker Hub Image Push Verification using the DockerHub Account](screenshots/tag-verification-using-the-browser.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 16 — CREATE REMOTE TERRAFORM STATE INFRASTRUCTURE
-# =====================================================================================================================
 
-# ---------------------------------------------------------
 # CREATE S3 BUCKET
-# ---------------------------------------------------------
 
 ```bash
 aws s3api create-bucket --bucket dynamic-recovery-terraform-state --region us-east-1
@@ -881,9 +835,7 @@ Bucket names MUST be globally unique.
 ![S3 Bucket Creation for Terraform State Command](screenshots/s3-bucket-creation.png)
 ---
 
-# ---------------------------------------------------------
 # ENABLE VERSIONING
-# ---------------------------------------------------------
 
 ```bash
 aws s3api put-bucket-versioning --bucket dynamic-recovery-terraform-state --versioning-configuration Status=Enabled
@@ -892,9 +844,7 @@ aws s3api put-bucket-versioning --bucket dynamic-recovery-terraform-state --vers
 ![Enabled Versioning](screenshots/version-enabled.png)
 ---
 
-# ---------------------------------------------------------
 # ENABLE ENCRYPTION
-# ---------------------------------------------------------
 
 ```bash
 aws s3api put-bucket-encryption --bucket dynamic-recovery-terraform-state --server-side-encryption-configuration '{
@@ -910,18 +860,15 @@ aws s3api put-bucket-encryption --bucket dynamic-recovery-terraform-state --serv
 ![Enabled Server Side Encryption](screenshots/server-side-encryption-enabled.png)
 ---
 
-# ---------------------------------------------------------
 # BLOCK PUBLIC ACCESS
-# ---------------------------------------------------------
 
 ```bash
 aws s3api put-public-access-block --bucket dynamic-recovery-terraform-state --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 ```
 ![Public Access Blockage](screenshots/public-access-blockage.png)
 ---
-# ---------------------------------------------------------
+
 # VERIFY BUCKET
-# ---------------------------------------------------------
 1. Run:
 ```bash
 aws s3 ls
@@ -932,18 +879,16 @@ dynamic-recovery-terraform-state
 ```
 ![Bucket Verification](screenshots/bucket-verification.png)
 
-# ---------------------------------------------------------
 # CREATE DYNAMODB LOCK TABLE
-# ---------------------------------------------------------
 
 ```bash
 aws dynamodb create-table --table-name terraform-locks --attribute-definitions AttributeName=LockID,AttributeType=S --key-schema AttributeName=LockID,KeyType=HASH --billing-mode PAY_PER_REQUEST --region us-east-1
 ```
 ![Dynamodb Table Creation for State Locking](screenshots/dynamodb-table-creation-for-state-locking.png)
 ---
-# ---------------------------------------------------------
+
 # VERIFY TABLE
-# ---------------------------------------------------------
+
 1. Run:
 ```bash
 aws dynamodb list-tables
@@ -958,9 +903,7 @@ terraform-locks
 ![Functions of various components of the remote state infrastructure](screenshots/remote-state-infrastructure-roles.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 17 — CREATE ROUTE53 HOSTED ZONE
-# =====================================================================================================================
 
 1. Create hosted zone:
 
@@ -1009,9 +952,7 @@ ns-1424.awsdns-50.org
 
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 18 — UPDATE QSERVERS NAMESERVERS
-# =====================================================================================================================
 
 1. Login to:
 - QServers
@@ -1039,10 +980,8 @@ dig auemeribetech.com.ng NS
 
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 19 — CREATE TERRAFORM CONFIGURATION
 # FILE: terraform/versions.tf
-# =====================================================================================================================
 
 1. Open:
 
@@ -1096,10 +1035,8 @@ terraform {
 ![Versions.tf Creation](screenshots/versions.tf-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 20 — CREATE VARIABLES
 # FILE: terraform/variables.tf
-# =====================================================================================================================
 
 1. Open:
 
@@ -1152,10 +1089,8 @@ variable "public_key" {
 ![Variables.tf Creation](screenshots/variables.tf-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 21 — CREATE OUTPUTS
 # FILE: terraform/outputs.tf
-# =====================================================================================================================
 
 1. Open:
 
@@ -1181,10 +1116,8 @@ output "instance_public_dns" {
 ![Outputs.tf Creation](screenshots/outputs-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 22 — CREATE TERRAFORM VARIABLES
 # FILE: terraform/terraform.tfvars
-# =====================================================================================================================
 
 1. Open:
 
@@ -1207,10 +1140,8 @@ instance_type = "t3.micro"
 [Terraform.tfvars Creation](screenshots/terraform.tfvars-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 23 — CREATE MAIN TERRAFORM CONFIGURATION
 # FILE: terraform/main.tf
-# =====================================================================================================================
 
 Open:
 
@@ -1390,10 +1321,8 @@ resource "aws_route53_record" "app_dns" {
 ![Main.tf Creation](screenshots/main.tf-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 24 — CREATE WAIT SCRIPT
 # FILE: scripts/wait-for-instance.sh
-# =====================================================================================================================
 
 1. Open:
 
@@ -1452,10 +1381,8 @@ chmod +x scripts/wait-for-instance.sh
 ![Wait-For-Instance.sh Creation](screenshots/wait-for-instance.sh-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 25 — CREATE DEPLOY PIPELINE
 # FILE: .github/workflows/deploy.yml
-# =====================================================================================================================
 
 Open:
 
@@ -1480,6 +1407,7 @@ Paste:
 # - Apple Silicon → AMD64 compatibility
 # - Dynamic infrastructure recovery
 # - Automatic deployment pipeline
+# - Docker daemon readiness verification
 # ==========================================================
 
 name: Build Provision Deploy
@@ -1647,6 +1575,12 @@ jobs:
             -o StrictHostKeyChecking=no \
             ubuntu@$INSTANCE_IP << EOF
 
+            until sudo docker info > /dev/null 2>&1
+            do
+              echo "Waiting for Docker daemon..."
+              sleep 5
+            done
+
             sudo docker rm -f dynamic-recovery-app || true
 
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app:latest
@@ -1678,10 +1612,8 @@ jobs:
 ![Deploy.yml File Creation](screenshots/deploy.yml-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 26 — CREATE DESTROY PIPELINE
 # FILE: .github/workflows/destroy.yml
-# =====================================================================================================================
 
 Open:
 
@@ -1749,9 +1681,7 @@ jobs:
 ![Destroy.yml File Creation](screenshots/destroy.yml-creation.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 27 — CREATE ARCHITECTURE DIAGRAM
-# =====================================================================================================================
 
 Open:
 
@@ -1848,9 +1778,7 @@ open docs/architecture-diagram.png
 ![Architecture Diagram](docs/architecture-diagram.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 28 — INITIALIZE TERRAFORM
-# =====================================================================================================================
 
 1. Navigate:
 
@@ -1880,9 +1808,7 @@ terraform plan -var="public_key=$(cat ~/.ssh/id_rsa.pub)"
 
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 29 — DEPLOY INFRASTRUCTURE
-# =====================================================================================================================
 
 Deploy:
 
@@ -1907,9 +1833,7 @@ Terraform automatically:
 
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 30 — VERIFY DOMAIN
-# =====================================================================================================================
 
 1. Open browser:
 
@@ -1941,9 +1865,7 @@ Expected:
 ![Health Endpoint Test](screenshots/health-endpoint-test.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 31 — CONFIGURE GITHUB
-# =====================================================================================================================
 
 1. Authenticate GitHub CLI:
 
@@ -1958,35 +1880,35 @@ gh auth login
 git init
 ```
 
-Add files:
+3. Add files:
 
 ```bash
 git add .
 ```
+![Adding Files Using Git Command](screenshots/adding-files-using-git.png)
 
-Commit:
+4. Commit:
 
 ```bash
 git commit -m "Initial enterprise recovery architecture"
 ```
+![Tracking Added Files Using Git Command](screenshots/git-first-commit.png)
 
-Rename branch:
+5. Rename branch:
 
 ```bash
 git branch -M main
 ```
 
-Create GitHub repository:
+6. Create GitHub repository:
 
 ```bash
 gh repo create containerized-app-terraform-cicd --public --source=. --remote=origin --push
 ```
-
+![Successful GitHub Repository Deployment](screenshots/successful-github-repo-deployment.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 32 — CONFIGURE GITHUB SECRETS
-# =====================================================================================================================
 
 1. Set AWS Access Key:
 
@@ -2069,13 +1991,12 @@ VM_SSH_KEY
 ![GitHub Configured Secrets](screenshots/gh-configured-secrets.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 33 — TEST GITHUB ACTIONS PIPELINE
-# =====================================================================================================================
 
 Trigger pipeline:
 
 ```bash
+git add .
 git commit --allow-empty -m "trigger recovery pipeline"
 ```
 
@@ -2097,9 +2018,7 @@ GitHub Actions automatically:
 
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 34 — VERIFY LIVE DOMAIN
-# =====================================================================================================================
 
 Open browser:
 
@@ -2115,9 +2034,7 @@ Expected:
 
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 35 — DESTROY INFRASTRUCTURE
-# =====================================================================================================================
 
 Navigate:
 
@@ -2145,20 +2062,19 @@ Removes:
 ✔ Route53 A Record  
 ✔ AWS Key Pairs  
 
+![Elimination of AWS Infrastructure Using Terraform Destroy and Browser Verification](screenshots/aws-infrastructure-elimination-and-browser-verification.png)
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 36 — REACTIVATE INFRASTRUCTURE
-# =====================================================================================================================
 
-Trigger pipeline again:
+1. Trigger pipeline again:
 
 ```bash
 git add .
 git commit --allow-empty -m "reactivate infrastructure"
 ```
 
-Push:
+2. Push:
 
 ```bash
 git push
@@ -2174,9 +2090,7 @@ GitHub Actions automatically:
 
 ---
 
-# =====================================================================================================================
 # ⚙️ STEP 37 — VERIFY AUTOMATIC DOMAIN RECOVERY
-# =====================================================================================================================
 
 Open browser:
 
@@ -2192,9 +2106,7 @@ Expected:
 
 ---
 
-# =====================================================================================================================
 # 🧠 TYPICAL RECOVERY TIME
-# =====================================================================================================================
 
 ```text
 EC2 Creation             → 30–90 seconds
@@ -2207,9 +2119,7 @@ Fully Live               → ~2–6 minutes
 
 ---
 
-# =====================================================================================================================
 # 🏁 FINAL PROJECT OUTCOME
-# =====================================================================================================================
 
 You now have:
 
@@ -2230,9 +2140,7 @@ You now have:
 
 ---
 
-# =====================================================================================================================
 # 🚀 FINAL ENTERPRISE RECOVERY FLOW
-# =====================================================================================================================
 
 ```text
 terraform destroy
@@ -2261,7 +2169,5 @@ auemeribetech.com.ng Live Again
 ```
 
 ---
-
-# =====================================================================================================================
 # 🚀 PROJECT COMPLETE
-# =====================================================================================================================
+---

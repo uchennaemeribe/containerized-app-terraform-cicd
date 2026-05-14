@@ -12,6 +12,7 @@
 # - Apple Silicon → AMD64 compatibility
 # - Dynamic infrastructure recovery
 # - Automatic deployment pipeline
+# - Docker daemon readiness verification
 # ==========================================================
 
 name: Build Provision Deploy
@@ -178,6 +179,12 @@ jobs:
           ssh -i ~/.ssh/aws_key_pair \
             -o StrictHostKeyChecking=no \
             ubuntu@$INSTANCE_IP << EOF
+
+            until sudo docker info > /dev/null 2>&1
+            do
+              echo "Waiting for Docker daemon..."
+              sleep 5
+            done
 
             sudo docker rm -f dynamic-recovery-app || true
 
