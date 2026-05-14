@@ -2071,7 +2071,7 @@ Removes:
 
 ```bash
 git add .
-git commit --allow-empty -m "reactivate infrastructure"
+git commit --allow-empty -m "reactivate completed infrastructure"
 ```
 
 2. Push:
@@ -2101,9 +2101,9 @@ http://auemeribetech.com.ng:3000
 Expected:
 
 ```text
-🚀 Dynamic Infrastructure Recovery Pipeline Active!
+🚀 Dynamic Infrastructure Full Recovery Pipeline Active!
 ```
-
+![Automatic Domain Recovery Verification](screenshots/automatic-domain-recovery-verification-using-browser.png)
 ---
 
 # 🧠 TYPICAL RECOVERY TIME
