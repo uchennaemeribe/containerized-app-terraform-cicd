@@ -9,7 +9,9 @@
 # - Terraform automation
 # - Secure SSH configuration
 # - Dockerized application deployment
-# - Dynamic infrastructure cleanup readiness
+# - Apple Silicon → AMD64 compatibility
+# - Dynamic infrastructure recovery
+# - Automatic deployment pipeline
 # ==========================================================
 
 name: Build Provision Deploy
@@ -29,26 +31,28 @@ env:
 
 jobs:
 
-  # ========================================================
-  # MAIN DEPLOYMENT JOB
-  # ========================================================
+# ==========================================================
+# MAIN DEPLOYMENT JOB
+# ==========================================================
 
   deploy:
+
     name: Provision Infrastructure and Deploy Container
+
     runs-on: ubuntu-latest
 
     steps:
 
-      # ====================================================
-      # CHECKOUT REPOSITORY
-      # ====================================================
+# ==========================================================
+# CHECKOUT REPOSITORY
+# ==========================================================
 
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # ====================================================
-      # CONFIGURE AWS CREDENTIALS
-      # ====================================================
+# ==========================================================
+# CONFIGURE AWS CREDENTIALS
+# ==========================================================
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -57,128 +61,139 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # ====================================================
-      # SETUP TERRAFORM
-      # ====================================================
+# ==========================================================
+# LOGIN TO DOCKER HUB
+# ==========================================================
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+# ==========================================================
+# SETUP DOCKER BUILDX
+# REQUIRED FOR MULTI-ARCHITECTURE BUILDS
+# ==========================================================
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+# ==========================================================
+# BUILD AND PUSH DOCKER IMAGE
+# APPLE SILICON → AMD64 COMPATIBILITY
+# ==========================================================
+
+      - name: Build and Push Docker Image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            -t ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app:latest \
+            --push .
+
+# ==========================================================
+# SETUP TERRAFORM
+# ==========================================================
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # ====================================================
-      # TERRAFORM INITIALIZATION
-      # ====================================================
+# ==========================================================
+# TERRAFORM INITIALIZATION
+# ==========================================================
 
       - name: Terraform Init
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        working-directory: terraform
         run: terraform init -reconfigure
 
-      # ====================================================
-      # TERRAFORM VALIDATION
-      # ====================================================
+# ==========================================================
+# TERRAFORM VALIDATION
+# ==========================================================
 
       - name: Terraform Validate
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        working-directory: terraform
         run: terraform validate
 
-      # ====================================================
-      # TERRAFORM PLAN
-      # ====================================================
+# ==========================================================
+# TERRAFORM PLAN
+# ==========================================================
 
       - name: Terraform Plan
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        working-directory: terraform
         env:
-          TF_VAR_public_key: ${{ secrets.PUBLIC_KEY }}
+          TF_VAR_public_key: ${{ secrets.VM_PUBLIC_KEY }}
         run: |
           terraform plan \
-          -var="public_key=${TF_VAR_public_key}" \
-          -out=tfplan
+            -var="public_key=${TF_VAR_public_key}" \
+            -out=tfplan
 
-      # ====================================================
-      # TERRAFORM APPLY
-      # ====================================================
+# ==========================================================
+# TERRAFORM APPLY
+# ==========================================================
 
       - name: Terraform Apply
-        working-directory: ${{ env.TF_WORKING_DIR }}
-        env:
-          TF_VAR_public_key: ${{ secrets.PUBLIC_KEY }}
+        working-directory: terraform
         run: |
           terraform apply \
-          -auto-approve \
-          tfplan
+            -auto-approve \
+            tfplan
 
-      # ====================================================
-      # CAPTURE EC2 INSTANCE INFORMATION
-      # ====================================================
+# ==========================================================
+# CAPTURE EC2 INSTANCE INFORMATION
+# ==========================================================
 
-      - name: Capture EC2 Public Information
-        working-directory: ${{ env.TF_WORKING_DIR }}
+      - name: Capture EC2 Information
+        working-directory: terraform
         run: |
           echo "INSTANCE_IP=$(terraform output -raw instance_public_ip)" >> $GITHUB_ENV
           echo "INSTANCE_DNS=$(terraform output -raw instance_public_dns)" >> $GITHUB_ENV
 
-      # ====================================================
-      # CONFIGURE SSH PRIVATE KEY
-      # ====================================================
+# ==========================================================
+# CONFIGURE SSH PRIVATE KEY
+# ==========================================================
 
       - name: Configure SSH Key
         run: |
           mkdir -p ~/.ssh
 
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/aws_key_pair
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/aws_key_pair
 
           chmod 600 ~/.ssh/aws_key_pair
 
-          for i in {1..10}; do
-            ssh-keyscan -H $INSTANCE_IP >> ~/.ssh/known_hosts && break
-            echo "Waiting for SSH service..."
-            sleep 10
-          done
-
-      # ====================================================
-      # WAIT FOR EC2 INSTANCE INITIALIZATION
-      # ====================================================
+# ==========================================================
+# WAIT FOR EC2 INSTANCE INITIALIZATION
+# ==========================================================
 
       - name: Wait for EC2 Readiness
         run: |
           chmod +x scripts/wait-for-instance.sh
           ./scripts/wait-for-instance.sh "$INSTANCE_IP"
 
-      # ====================================================
-      # DEPLOY DOCKER CONTAINER
-      # ====================================================
+# ==========================================================
+# DEPLOY DOCKER CONTAINER
+# ==========================================================
 
       - name: Deploy Docker Container
         run: |
           ssh -i ~/.ssh/aws_key_pair \
             -o StrictHostKeyChecking=no \
-            ubuntu@$INSTANCE_IP << 'EOF'
+            ubuntu@$INSTANCE_IP << EOF
 
-            sudo apt-get update -y
+            sudo docker rm -f dynamic-recovery-app || true
 
-            sudo apt-get install -y docker.io git
-
-            sudo systemctl start docker
-            sudo systemctl enable docker
-
-            sudo usermod -aG docker ubuntu
-
-            git clone https://github.com/${{ github.repository }} app
-
-            cd app
-
-            sudo docker build -t containerized-app .
-
-            sudo docker rm -f containerized-app || true
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app:latest
 
             sudo docker run -d \
-              --name containerized-app \
+              --name dynamic-recovery-app \
               -p 3000:3000 \
-              containerized-app
+              --restart unless-stopped \
+              ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app:latest
+
           EOF
 
-      # ====================================================
-      # DEPLOYMENT COMPLETE
-      # ====================================================
+# ==========================================================
+# DEPLOYMENT SUCCESS OUTPUT
+# ==========================================================
 
       - name: Deployment Complete
         run: |
@@ -187,4 +202,7 @@ jobs:
           echo "======================================="
           echo "Application URL:"
           echo "http://$INSTANCE_IP:3000"
+          echo ""
+          echo "Live Domain:"
+          echo "http://auemeribetech.com.ng:3000"
           echo "======================================="

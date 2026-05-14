@@ -17,7 +17,6 @@
 provider "aws" {
   region = var.aws_region
 }
-
 # ============================================================
 # RANDOM RESOURCE SUFFIX
 # ============================================================
@@ -25,7 +24,6 @@ provider "aws" {
 resource "random_id" "suffix" {
   byte_length = 2
 }
-
 # ============================================================
 # UBUNTU AMI LOOKUP
 # ============================================================
@@ -46,7 +44,6 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 }
-
 # ============================================================
 # EC2 SSH KEY PAIR
 # ============================================================
@@ -56,15 +53,7 @@ resource "aws_key_pair" "deployer" {
   key_name = "enterprise-deployer-key-${random_id.suffix.hex}"
 
   public_key = var.public_key
-
-  tags = {
-    Name        = "enterprise-deployer-key"
-    Environment = "production"
-    ManagedBy   = "terraform"
-    Project     = "containerized-app"
-  }
 }
-
 # ============================================================
 # APPLICATION SECURITY GROUP
 # ============================================================
@@ -73,7 +62,7 @@ resource "aws_security_group" "app_sg" {
 
   name = "containerized-app-sg-${random_id.suffix.hex}"
 
-  description = "Security group for containerized application"
+  description = "Security group for dynamic recovery application"
 
   ingress {
 
@@ -105,15 +94,7 @@ resource "aws_security_group" "app_sg" {
 
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name        = "containerized-app-security-group"
-    Environment = "production"
-    ManagedBy   = "terraform"
-    Project     = "containerized-app"
-  }
 }
-
 # ============================================================
 # EC2 APPLICATION SERVER
 # ============================================================
@@ -153,6 +134,32 @@ resource "aws_instance" "app_server" {
     Name        = "containerized-app-server"
     Environment = "production"
     ManagedBy   = "terraform"
-    Project     = "containerized-app"
+    Project     = "dynamic-recovery-app"
   }
+}
+# ============================================================
+# ROUTE53 HOSTED ZONE LOOKUP
+# ============================================================
+data "aws_route53_zone" "main" {
+
+  name = "auemeribetech.com.ng"
+
+  private_zone = false
+}
+# ============================================================
+# AUTOMATIC DNS RECOVERY RECORD
+# ============================================================
+resource "aws_route53_record" "app_dns" {
+
+  zone_id = data.aws_route53_zone.main.zone_id
+
+  name = "auemeribetech.com.ng"
+
+  type = "A"
+
+  ttl = 60
+
+  records = [
+    aws_instance.app_server.public_ip
+  ]
 }

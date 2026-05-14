@@ -1,14 +1,69 @@
 digraph G {
-  rankdir=TB;
-  node [shape=box, style=filled, color=lightblue];
 
-  Developer -> "GitHub Repo";
-  "GitHub Repo" -> "Trigger Pipeline";
-  "Trigger Pipeline" -> "Build (Docker Image)";
-  "Build (Docker Image)" -> "Test (/health endpoint)";
-  "Test (/health endpoint)" -> "Notify (Pipeline Status)";
-  "Notify (Pipeline Status)" -> "Deliver (Docker Hub)";
-  "Deliver (Docker Hub)" -> "Deploy (EC2 via SSH)";
-  "Deploy (EC2 via SSH)" -> "Docker Container";
-  "Docker Container" -> "User Browser";
+  rankdir=TB;
+
+  bgcolor="white";
+
+  node [
+    shape=box,
+    style="rounded,filled",
+    fillcolor=lightblue,
+    color=black,
+    fontname="Helvetica"
+  ];
+
+  edge [
+    color=gray40,
+    penwidth=1.5
+  ];
+
+  Developer [shape=oval, fillcolor=lightgreen];
+
+  GitHub [label="GitHub Repository"];
+
+  GitHubActions [label="GitHub Actions CI/CD"];
+
+  Terraform [label="Terraform Apply"];
+
+  RemoteState [label="Remote Terraform State\n(S3 + DynamoDB)"];
+
+  EC2 [label="Dynamic AWS EC2"];
+
+  Route53 [label="Route53 Automatic DNS"];
+
+  DockerHub [label="Docker Hub"];
+
+  DockerDeploy [label="Docker Deployment via SSH"];
+
+  Container [label="Docker Container"];
+
+  Domain [label="auemeribetech.com.ng"];
+
+  Browser [label="User Browser", shape=oval, fillcolor=lightyellow];
+
+  Developer -> GitHub;
+
+  GitHub -> GitHubActions;
+
+  GitHubActions -> Terraform;
+
+  Terraform -> RemoteState;
+
+  Terraform -> EC2;
+
+  GitHubActions -> DockerHub;
+
+  DockerHub -> DockerDeploy;
+
+  DockerDeploy -> EC2;
+
+  EC2 -> Container;
+
+  Terraform -> Route53;
+
+  Route53 -> Domain;
+
+  Domain -> Browser;
+
+  Container -> Browser;
 }

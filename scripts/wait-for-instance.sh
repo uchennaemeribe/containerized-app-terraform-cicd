@@ -1,28 +1,38 @@
-# ==========================================================
-# FILE: scripts/wait-for-instance.sh
-# PURPOSE:
-# Wait For EC2 Initialization + Docker Readiness
-#
-# FEATURES:
-# - SSH connectivity validation
-# - Docker readiness verification
-# - Automated retry mechanism
-# ==========================================================
-
 #!/bin/bash
 
 INSTANCE_IP=$1
 
-echo "Waiting for instance readiness..."
+echo "======================================="
+echo "WAITING FOR EC2 INSTANCE INITIALIZATION"
+echo "======================================="
+
+SUCCESS=false
 
 for i in {1..30}
 do
+
+  echo "Attempt $i of 30"
+
   ssh -i ~/.ssh/aws_key_pair \
     -o StrictHostKeyChecking=no \
     -o ConnectTimeout=10 \
     ubuntu@$INSTANCE_IP \
-    "docker --version" && break
+    "docker --version" && SUCCESS=true && break
 
-  echo "Waiting for Docker installation..."
+  echo "Docker not ready yet..."
+
   sleep 10
 done
+
+if [ "$SUCCESS" != "true" ]; then
+
+  echo "======================================="
+  echo "INSTANCE INITIALIZATION FAILED"
+  echo "======================================="
+
+  exit 1
+fi
+
+echo "======================================="
+echo "INSTANCE IS READY"
+echo "======================================="
