@@ -1,21 +1,21 @@
 # ==========================================================
 # FILE: .github/workflows/deploy.yml
 # PURPOSE:
-# Enterprise CI/CD Pipeline
-# Terraform Infrastructure Provisioning + Docker Deployment
+# Enterprise Production CI/CD Pipeline
 #
 # FEATURES:
-# - Dynamic EC2 provisioning
-# - Terraform automation
-# - Secure SSH configuration
-# - Dockerized application deployment
-# - Apple Silicon → AMD64 compatibility
-# - Dynamic infrastructure recovery
-# - Automatic deployment pipeline
-# - Docker daemon readiness verification
+# - Stable Infrastructure Architecture
+# - Application-Level Deployment
+# - Dockerized Application Deployment
+# - Apple Silicon → AMD64 Compatibility
+# - Zero Infrastructure Recreation During Deployments
+# - Secure SSH Deployment
+# - Docker Hub Integration
+# - Minimal Downtime Deployment
+# - Enterprise DevOps Workflow
 # ==========================================================
 
-name: Build Provision Deploy
+name: Enterprise Application Deployment
 
 on:
   push:
@@ -28,17 +28,16 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  TF_WORKING_DIR: terraform
 
 jobs:
 
 # ==========================================================
-# MAIN DEPLOYMENT JOB
+# APPLICATION DEPLOYMENT JOB
 # ==========================================================
 
   deploy:
 
-    name: Provision Infrastructure and Deploy Container
+    name: Deploy Updated Application to Existing Infrastructure
 
     runs-on: ubuntu-latest
 
@@ -50,17 +49,6 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-# ==========================================================
-# CONFIGURE AWS CREDENTIALS
-# ==========================================================
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
 
 # ==========================================================
 # LOGIN TO DOCKER HUB
@@ -93,63 +81,6 @@ jobs:
             --push .
 
 # ==========================================================
-# SETUP TERRAFORM
-# ==========================================================
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-# ==========================================================
-# TERRAFORM INITIALIZATION
-# ==========================================================
-
-      - name: Terraform Init
-        working-directory: terraform
-        run: terraform init -reconfigure
-
-# ==========================================================
-# TERRAFORM VALIDATION
-# ==========================================================
-
-      - name: Terraform Validate
-        working-directory: terraform
-        run: terraform validate
-
-# ==========================================================
-# TERRAFORM PLAN
-# ==========================================================
-
-      - name: Terraform Plan
-        working-directory: terraform
-        env:
-          TF_VAR_public_key: ${{ secrets.VM_PUBLIC_KEY }}
-        run: |
-          terraform plan \
-            -var="public_key=${TF_VAR_public_key}" \
-            -out=tfplan
-
-# ==========================================================
-# TERRAFORM APPLY
-# ==========================================================
-
-      - name: Terraform Apply
-        working-directory: terraform
-        run: |
-          terraform apply \
-            -auto-approve \
-            tfplan
-
-# ==========================================================
-# CAPTURE EC2 INSTANCE INFORMATION
-# ==========================================================
-
-      - name: Capture EC2 Information
-        working-directory: terraform
-        run: |
-          echo "INSTANCE_IP=$(terraform output -raw instance_public_ip)" >> $GITHUB_ENV
-          echo "INSTANCE_DNS=$(terraform output -raw instance_public_dns)" >> $GITHUB_ENV
-
-# ==========================================================
 # CONFIGURE SSH PRIVATE KEY
 # ==========================================================
 
@@ -162,23 +93,26 @@ jobs:
           chmod 600 ~/.ssh/aws_key_pair
 
 # ==========================================================
-# WAIT FOR EC2 INSTANCE INITIALIZATION
+# ADD EC2 HOST TO KNOWN HOSTS
 # ==========================================================
 
-      - name: Wait for EC2 Readiness
+      - name: Add EC2 Host to Known Hosts
         run: |
-          chmod +x scripts/wait-for-instance.sh
-          ./scripts/wait-for-instance.sh "$INSTANCE_IP"
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
 # ==========================================================
-# DEPLOY DOCKER CONTAINER
+# DEPLOY UPDATED APPLICATION
+# EXISTING INFRASTRUCTURE REMAINS STABLE
 # ==========================================================
 
-      - name: Deploy Docker Container
+      - name: Deploy Updated Docker Container
         run: |
           ssh -i ~/.ssh/aws_key_pair \
-            -o StrictHostKeyChecking=no \
-            ubuntu@$INSTANCE_IP << EOF
+            ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+
+            echo "======================================="
+            echo "UPDATING APPLICATION CONTAINER"
+            echo "======================================="
 
             until sudo docker info > /dev/null 2>&1
             do
@@ -186,17 +120,41 @@ jobs:
               sleep 5
             done
 
-            sudo docker rm -f dynamic-recovery-app || true
+            echo "Pulling latest Docker image..."
 
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app:latest
 
+            echo "Stopping existing container..."
+
+            sudo docker stop dynamic-recovery-app || true
+
+            echo "Removing old container..."
+
+            sudo docker rm dynamic-recovery-app || true
+
+            echo "Starting updated container..."
+
             sudo docker run -d \
               --name dynamic-recovery-app \
-              -p 3000:3000 \
               --restart unless-stopped \
+              -p 3000:3000 \
               ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app:latest
 
+            echo "======================================="
+            echo "APPLICATION UPDATE COMPLETE"
+            echo "======================================="
+
           EOF
+
+# ==========================================================
+# VERIFY APPLICATION HEALTH
+# ==========================================================
+
+      - name: Verify Application Health
+        run: |
+          sleep 15
+
+          curl -f https://auemeribetech.com.ng/health
 
 # ==========================================================
 # DEPLOYMENT SUCCESS OUTPUT
@@ -205,11 +163,17 @@ jobs:
       - name: Deployment Complete
         run: |
           echo "======================================="
-          echo "DEPLOYMENT SUCCESSFUL"
+          echo "ENTERPRISE DEPLOYMENT SUCCESSFUL"
           echo "======================================="
-          echo "Application URL:"
-          echo "http://$INSTANCE_IP:3000"
+          echo "Production URL:"
+          echo "https://auemeribetech.com.ng"
           echo ""
-          echo "Live Domain:"
-          echo "http://auemeribetech.com.ng:3000"
+          echo "Infrastructure Status:"
+          echo "STABLE"
+          echo ""
+          echo "Deployment Strategy:"
+          echo "APPLICATION-LEVEL UPDATE"
+          echo ""
+          echo "Infrastructure Recreation:"
+          echo "DISABLED"
           echo "======================================="

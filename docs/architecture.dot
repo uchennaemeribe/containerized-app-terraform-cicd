@@ -25,7 +25,7 @@ digraph G {
 
   Terraform [label="Terraform Apply"];
 
-  RemoteState [label="Remote Terraform State\n(S3 + DynamoDB)"];
+  RemoteState [label="Remote Terraform State\n(S3 Native Lockfile)"];
 
   EC2 [label="Dynamic AWS EC2"];
 

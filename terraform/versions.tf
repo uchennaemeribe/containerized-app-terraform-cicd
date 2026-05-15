@@ -20,20 +20,21 @@ terraform {
       version = "~> 3.5"
     }
   }
+
 # ==========================================================
 # REMOTE TERRAFORM STATE
 # ==========================================================
 
   backend "s3" {
 
-    bucket         = "dynamic-recovery-terraform-state"
+    bucket = "dynamic-recovery-terraform-state"
 
-    key            = "global/terraform.tfstate"
+    key = "global/terraform.tfstate"
 
-    region         = "us-east-1"
+    region = "us-east-1"
 
-    dynamodb_table = "terraform-locks"
+    use_lockfile = true
 
-    encrypt        = true
+    encrypt = true
   }
 }

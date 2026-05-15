@@ -1,19 +1,19 @@
-# 🚀 DYNAMIC INFRASTRUCTURE RECOVERY PIPELINE
+# 🚀 ENTERPRISE CI/CD RECOVERY PIPELINE
 
 # PROJECT TITLE
-Dynamic Infrastructure Recovery Pipeline with Terraform, Docker, GitHub Actions, AWS EC2, Route53, and Automatic DNS Recovery
+Enterprise CI/CD Pipeline with Terraform, Docker, GitHub Actions, AWS EC2, Route53, Nginx, and HTTPS Automation
 
 # AUTHOR
 Anthony Uchenna Emeribe
 
 # DOMAIN
-auemeribetech.com.ng
+https://auemeribetech.com.ng
 
 # PROJECT CATEGORY
-Enterprise DevOps | CI/CD Automation | Infrastructure as Code | Recovery Engineering
+Enterprise DevOps | CI/CD Automation | Infrastructure as Code | Production Deployment Engineering
 
 # ARCHITECTURE MODEL
-Ephemeral Infrastructure + Dynamic DNS Recovery + Zero Idle Cost Architecture
+Stable Infrastructure + Application-Level CI/CD Deployment + Automated HTTPS Reverse Proxy Architecture
 
 # TECHNOLOGY STACK
 ✔ AWS EC2  
@@ -25,27 +25,38 @@ Ephemeral Infrastructure + Dynamic DNS Recovery + Zero Idle Cost Architecture
 ✔ Express.js  
 ✔ Docker Hub  
 ✔ S3 Remote Backend  
-✔ DynamoDB State Locking  
+✔ Native S3 State Locking  
 
 ---
 
 # 📌 PROJECT OVERVIEW
 
 
-This project demonstrates:
+This project demonstrates a production-grade DevOps deployment architecture using:
 
-✔ Dynamic EC2 infrastructure provisioning  
+✔ AWS EC2  
+
 ✔ Terraform Infrastructure as Code  
-✔ GitHub Actions CI/CD automation  
-✔ Docker container deployment  
-✔ Automatic Route53 DNS recovery  
-✔ Dynamic public IP recovery  
-✔ Ephemeral infrastructure lifecycle  
-✔ Enterprise recovery engineering  
-✔ Zero idle AWS cost architecture  
-✔ Remote Terraform state management  
-✔ Automated infrastructure destruction and recreation  
-✔ Automatic domain restoration after infrastructure recreation  
+
+✔ GitHub Actions CI/CD Automation  
+
+✔ Docker Containerization  
+
+✔ Docker Hub Image Registry  
+
+✔ Route53 DNS Management  
+
+✔ Nginx Reverse Proxy  
+
+✔ HTTPS SSL Automation  
+
+✔ Stable Infrastructure Architecture  
+
+✔ Application-Level Deployment Automation  
+
+✔ Remote Terraform State Management  
+
+✔ Enterprise DevOps Deployment Workflow    
 
 The infrastructure can be COMPLETELY destroyed using:
 
@@ -77,39 +88,85 @@ INCLUDING:
 
 ---
 
+# ✅ ENTERPRISE PRODUCTION APPROACH
+
+The architecture has now been upgraded to follow REAL enterprise DevOps standards.
+
+Infrastructure is provisioned ONCE and remains stable.
+
+GitHub Actions now updates ONLY the application layer during deployments.
+
+This produces:
+
+✔ Faster deployments  
+
+✔ Stable infrastructure  
+
+✔ Stable public IP and domain  
+
+✔ Reduced downtime  
+
+✔ Production-grade deployment workflow  
+
+✔ Enterprise architecture standards  
+---
+## GITHUB ACTIONS RESPONSIBILITY
+
+GitHub Actions is responsible ONLY for:
+
+✔ Building Docker images  
+
+✔ Pushing Docker images to Docker Hub  
+
+✔ SSH deployment into EC2  
+
+✔ Pulling updated Docker images  
+
+✔ Replacing running containers  
+
+✔ Updating the application layer ONLY  
+
+Infrastructure is no longer recreated during application deployments.
+---
 # 🔥 COMPLETE ENTERPRISE EXECUTION FLOW
 
 
 ```text
-Developer Push
-       ↓
-GitHub Actions Trigger
-       ↓
-Terraform Apply
-       ↓
-Remote Terraform State Updated
-       ↓
-Dynamic EC2 Creation
-       ↓
-New Public IP Generated
-       ↓
-Route53 DNS Updated Automatically
-       ↓
-Docker Deployment via SSH
-       ↓
-Live Application
-       ↓
-terraform destroy
-       ↓
-Infrastructure Removed
-       ↓
-Zero Idle Cost
-       ↓
-Trigger Pipeline Again
-       ↓
-Infrastructure Recreated Automatically
-       ↓
-Domain Automatically Restored
+🔥 FINAL ENTERPRISE EXECUTION FLOW
+
+Developer
+        ↓
+Initial Terraform Deployment
+        ↓
+Stable EC2 Infrastructure Created
+        ↓
+Stable Route53 DNS Configured
+        ↓
+Nginx Reverse Proxy Configured
+        ↓
+HTTPS SSL Enabled
+        ↓
+Infrastructure Remains Stable
+        ↓
+Developer Pushes New Code
+        ↓
+GitHub Actions Triggered
+        ↓
+Docker Image Built
+        ↓
+Docker Image Pushed to Docker Hub
+        ↓
+SSH Into Existing EC2
+        ↓
+Updated Container Deployed
+        ↓
+Application Updated
+        ↓
+NO INFRASTRUCTURE RECREATION
+        ↓
+NO DNS PROPAGATION
+        ↓
+MINIMAL DOWNTIME
 ```
 
 ---
@@ -455,6 +512,7 @@ nano app.js
 // 🚀 Import Dependencies
 // =========================================
 const express = require('express');
+
 const app = express();
 
 // =========================================
@@ -466,22 +524,128 @@ const PORT = 3000;
 // 🌐 Root Endpoint
 // =========================================
 app.get('/', (req, res) => {
-  res.send('🚀 Dynamic Infrastructure Recovery Pipeline Active!');
+
+  res.send(`
+    <html>
+      <head>
+        <title>Enterprise CI/CD Recovery Pipeline</title>
+
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            background-color: #0f172a;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+          }
+
+          .container {
+            max-width: 800px;
+            padding: 40px;
+          }
+
+          h1 {
+            color: #38bdf8;
+            font-size: 2.5rem;
+          }
+
+          p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+          }
+
+          .status {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #1e293b;
+            border-radius: 10px;
+          }
+
+          .highlight {
+            color: #22c55e;
+            font-weight: bold;
+          }
+        </style>
+      </head>
+
+      <body>
+
+        <div class="container">
+
+          <h1>
+            🚀 Enterprise CI/CD Recovery Pipeline Active
+          </h1>
+
+          <p>
+            Stable Infrastructure + Application-Level Deployment
+          </p>
+
+          <div class="status">
+
+            <p>
+              ✅ Infrastructure Status:
+              <span class="highlight">STABLE</span>
+            </p>
+
+            <p>
+              ✅ Deployment Strategy:
+              <span class="highlight">ENTERPRISE CI/CD</span>
+            </p>
+
+            <p>
+              ✅ Downtime Strategy:
+              <span class="highlight">MINIMAL</span>
+            </p>
+
+            <p>
+              ✅ Domain:
+              <span class="highlight">
+                https://auemeribetech.com.ng
+              </span>
+            </p>
+
+          </div>
+
+        </div>
+
+      </body>
+    </html>
+  `);
+
 });
+
 // =========================================
 // ❤️ Health Check Endpoint
 // =========================================
 app.get('/health', (req, res) => {
+
   res.json({
     status: "OK",
-    recovery_mode: "ENABLED"
+    deployment: "PRODUCTION",
+    infrastructure: "STABLE",
+    architecture: "ENTERPRISE_CICD",
+    domain: "https://auemeribetech.com.ng"
   });
+
 });
+
 // =========================================
 // ▶️ Start Server
 // =========================================
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
+  console.log(`
+=========================================
+🚀 ENTERPRISE CI/CD PIPELINE ACTIVE
+=========================================
+Application Running on Port ${PORT}
+=========================================
+`);
+
 });
 ```
 
@@ -492,7 +656,7 @@ CTRL + X
 Y
 ENTER
 ```
-![Express Application Creation](screenshots/express-application-creation.png)
+![Express Application Creation](screenshots/express-application-file-creation.png)
 ---
 
 # ⚙️ STEP 8 — UPDATE package.json
@@ -590,7 +754,7 @@ http://localhost:3000
 ```text
 🚀 Dynamic Infrastructure Recovery Pipeline Active!
 ```
-![Browwser Verification for App.js Testing](screenshots/browser-verification-for-app.js-testing.png)
+![Browser Verification for App.js Testing](screenshots/browser-verification-for-app.js-testing.png)
 
 4. Test health endpoint:
 
@@ -833,6 +997,7 @@ IMPORTANT:
 Bucket names MUST be globally unique.
 
 ![S3 Bucket Creation for Terraform State Command](screenshots/s3-bucket-creation.png)
+
 ---
 
 # ENABLE VERSIONING
@@ -842,6 +1007,7 @@ aws s3api put-bucket-versioning --bucket dynamic-recovery-terraform-state --vers
 ```
 
 ![Enabled Versioning](screenshots/version-enabled.png)
+
 ---
 
 # ENABLE ENCRYPTION
@@ -857,7 +1023,9 @@ aws s3api put-bucket-encryption --bucket dynamic-recovery-terraform-state --serv
   ]
 }'
 ```
+
 ![Enabled Server Side Encryption](screenshots/server-side-encryption-enabled.png)
+
 ---
 
 # BLOCK PUBLIC ACCESS
@@ -865,42 +1033,65 @@ aws s3api put-bucket-encryption --bucket dynamic-recovery-terraform-state --serv
 ```bash
 aws s3api put-public-access-block --bucket dynamic-recovery-terraform-state --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 ```
+
 ![Public Access Blockage](screenshots/public-access-blockage.png)
+
 ---
 
 # VERIFY BUCKET
+
 1. Run:
+
 ```bash
 aws s3 ls
 ```
+
 2. You should see:
+
 ```text
 dynamic-recovery-terraform-state
 ```
+
 ![Bucket Verification](screenshots/bucket-verification.png)
 
-# CREATE DYNAMODB LOCK TABLE
-
-```bash
-aws dynamodb create-table --table-name terraform-locks --attribute-definitions AttributeName=LockID,AttributeType=S --key-schema AttributeName=LockID,KeyType=HASH --billing-mode PAY_PER_REQUEST --region us-east-1
-```
-![Dynamodb Table Creation for State Locking](screenshots/dynamodb-table-creation-for-state-locking.png)
 ---
 
-# VERIFY TABLE
+# NATIVE S3 STATE LOCKING
 
-1. Run:
-```bash
-aws dynamodb list-tables
-```
-2. You should see:
+Terraform now uses native S3 lockfile state locking directly from the backend configuration in:
+
 ```text
-terraform-locks
+terraform/versions.tf
 ```
-![Dynamodb Table Creation Verification](screenshots/table-verification.png)
 
-3. With the backend component of the versions.tf file, the various components of the remote state infrastructure and their functions will involve:
-![Functions of various components of the remote state infrastructure](screenshots/remote-state-infrastructure-roles.png)
+Using:
+
+```hcl
+use_lockfile = true
+```
+
+This removes the need for a separate DynamoDB locking table.
+
+Benefits include:
+
+✔ Simpler architecture  
+✔ Fewer AWS resources  
+✔ Lower infrastructure management overhead  
+✔ Native Terraform state locking  
+✔ Cleaner enterprise backend configuration
+
+---
+
+# REINITIALIZE TERRAFORM BACKEND
+
+After updating the backend configuration, reinitialize Terraform:
+
+```bash
+terraform init -reconfigure
+```
+
+Terraform will now automatically manage state locking using the S3 backend lockfile mechanism.
+
 ---
 
 # ⚙️ STEP 17 — CREATE ROUTE53 HOSTED ZONE
@@ -1014,25 +1205,26 @@ terraform {
       version = "~> 3.5"
     }
   }
+
 # ==========================================================
 # REMOTE TERRAFORM STATE
 # ==========================================================
 
   backend "s3" {
 
-    bucket         = "dynamic-recovery-terraform-state"
+    bucket = "dynamic-recovery-terraform-state"
 
-    key            = "global/terraform.tfstate"
+    key = "global/terraform.tfstate"
 
-    region         = "us-east-1"
+    region = "us-east-1"
 
-    dynamodb_table = "terraform-locks"
+    use_lockfile = true
 
-    encrypt        = true
+    encrypt = true
   }
 }
 ```
-![Versions.tf Creation](screenshots/versions.tf-creation.png)
+![Versions.tf Creation](screenshots/versions.tf-file-creation.png)
 ---
 
 # ⚙️ STEP 20 — CREATE VARIABLES
@@ -1155,13 +1347,15 @@ Paste:
 # ============================================================
 # FILE: terraform/main.tf
 # PURPOSE:
-# Dynamic EC2 Infrastructure Provisioning
+# Enterprise Stable Infrastructure Provisioning
 #
 # FEATURES:
-# - Dynamic public IP allocation
+# - Stable EC2 infrastructure
 # - Docker auto-installation
-# - Ephemeral infrastructure
-# - Zero persistent AWS resource strategy
+# - Nginx reverse proxy
+# - HTTPS-ready architecture
+# - Persistent production infrastructure
+# - Route53 automatic DNS management
 # ============================================================
 
 # ============================================================
@@ -1171,13 +1365,95 @@ Paste:
 provider "aws" {
   region = var.aws_region
 }
+
 # ============================================================
-# RANDOM RESOURCE SUFFIX
+# EC2 SSH KEY PAIR
 # ============================================================
 
-resource "random_id" "suffix" {
-  byte_length = 2
+resource "aws_key_pair" "deployer" {
+
+  key_name = "enterprise-deployer-key"
+
+  public_key = var.public_key
 }
+
+# ============================================================
+# APPLICATION SECURITY GROUP
+# ============================================================
+
+resource "aws_security_group" "app_sg" {
+
+  name = "enterprise-app-security-group"
+
+  description = "Enterprise production security group"
+
+  # ==========================================================
+  # SSH ACCESS
+  # ==========================================================
+
+  ingress {
+
+    description = "SSH Access"
+
+    from_port = 22
+    to_port   = 22
+
+    protocol = "tcp"
+
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # ==========================================================
+  # HTTP ACCESS
+  # ==========================================================
+
+  ingress {
+
+    description = "HTTP Access"
+
+    from_port = 80
+    to_port   = 80
+
+    protocol = "tcp"
+
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # ==========================================================
+  # HTTPS ACCESS
+  # ==========================================================
+
+  ingress {
+
+    description = "HTTPS Access"
+
+    from_port = 443
+    to_port   = 443
+
+    protocol = "tcp"
+
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # ==========================================================
+  # OUTBOUND ACCESS
+  # ==========================================================
+
+  egress {
+
+    from_port = 0
+    to_port   = 0
+
+    protocol = "-1"
+
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "enterprise-production-security-group"
+  }
+}
+
 # ============================================================
 # UBUNTU AMI LOOKUP
 # ============================================================
@@ -1198,57 +1474,7 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 }
-# ============================================================
-# EC2 SSH KEY PAIR
-# ============================================================
 
-resource "aws_key_pair" "deployer" {
-
-  key_name = "enterprise-deployer-key-${random_id.suffix.hex}"
-
-  public_key = var.public_key
-}
-# ============================================================
-# APPLICATION SECURITY GROUP
-# ============================================================
-
-resource "aws_security_group" "app_sg" {
-
-  name = "containerized-app-sg-${random_id.suffix.hex}"
-
-  description = "Security group for dynamic recovery application"
-
-  ingress {
-
-    description = "SSH Access"
-
-    from_port = 22
-    to_port   = 22
-    protocol  = "tcp"
-
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-
-    description = "Application Access"
-
-    from_port = 3000
-    to_port   = 3000
-    protocol  = "tcp"
-
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
-
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
 # ============================================================
 # EC2 APPLICATION SERVER
 # ============================================================
@@ -1267,6 +1493,10 @@ resource "aws_instance" "app_server" {
 
   associate_public_ip_address = true
 
+  # ==========================================================
+  # SERVER INITIALIZATION
+  # ==========================================================
+
   user_data = <<-EOF
               #!/bin/bash
 
@@ -1274,35 +1504,44 @@ resource "aws_instance" "app_server" {
 
               apt-get install -y \
                 docker.io \
-                docker-compose \
+                nginx \
+                certbot \
+                python3-certbot-nginx \
                 git \
                 curl
 
               systemctl enable docker
               systemctl start docker
 
+              systemctl enable nginx
+              systemctl start nginx
+
               usermod -aG docker ubuntu
               EOF
 
   tags = {
-    Name        = "containerized-app-server"
+    Name        = "enterprise-production-server"
     Environment = "production"
     ManagedBy   = "terraform"
     Project     = "dynamic-recovery-app"
   }
 }
+
 # ============================================================
 # ROUTE53 HOSTED ZONE LOOKUP
 # ============================================================
+
 data "aws_route53_zone" "main" {
 
   name = "auemeribetech.com.ng"
 
   private_zone = false
 }
+
 # ============================================================
-# AUTOMATIC DNS RECOVERY RECORD
+# AUTOMATIC DNS RECORD
 # ============================================================
+
 resource "aws_route53_record" "app_dns" {
 
   zone_id = data.aws_route53_zone.main.zone_id
@@ -1311,14 +1550,14 @@ resource "aws_route53_record" "app_dns" {
 
   type = "A"
 
-  ttl = 60
+  ttl = 300
 
   records = [
     aws_instance.app_server.public_ip
   ]
 }
 ```
-![Main.tf Creation](screenshots/main.tf-creation.png)
+![Main.tf Creation](screenshots/main.tf-file-creation.png)
 ---
 
 # ⚙️ STEP 24 — CREATE WAIT SCRIPT
@@ -1396,21 +1635,21 @@ Paste:
 # ==========================================================
 # FILE: .github/workflows/deploy.yml
 # PURPOSE:
-# Enterprise CI/CD Pipeline
-# Terraform Infrastructure Provisioning + Docker Deployment
+# Enterprise Production CI/CD Pipeline
 #
 # FEATURES:
-# - Dynamic EC2 provisioning
-# - Terraform automation
-# - Secure SSH configuration
-# - Dockerized application deployment
-# - Apple Silicon → AMD64 compatibility
-# - Dynamic infrastructure recovery
-# - Automatic deployment pipeline
-# - Docker daemon readiness verification
+# - Stable Infrastructure Architecture
+# - Application-Level Deployment
+# - Dockerized Application Deployment
+# - Apple Silicon → AMD64 Compatibility
+# - Zero Infrastructure Recreation During Deployments
+# - Secure SSH Deployment
+# - Docker Hub Integration
+# - Minimal Downtime Deployment
+# - Enterprise DevOps Workflow
 # ==========================================================
 
-name: Build Provision Deploy
+name: Enterprise Application Deployment
 
 on:
   push:
@@ -1423,17 +1662,16 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  TF_WORKING_DIR: terraform
 
 jobs:
 
 # ==========================================================
-# MAIN DEPLOYMENT JOB
+# APPLICATION DEPLOYMENT JOB
 # ==========================================================
 
   deploy:
 
-    name: Provision Infrastructure and Deploy Container
+    name: Deploy Updated Application to Existing Infrastructure
 
     runs-on: ubuntu-latest
 
@@ -1445,17 +1683,6 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-# ==========================================================
-# CONFIGURE AWS CREDENTIALS
-# ==========================================================
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
 
 # ==========================================================
 # LOGIN TO DOCKER HUB
@@ -1488,63 +1715,6 @@ jobs:
             --push .
 
 # ==========================================================
-# SETUP TERRAFORM
-# ==========================================================
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-# ==========================================================
-# TERRAFORM INITIALIZATION
-# ==========================================================
-
-      - name: Terraform Init
-        working-directory: terraform
-        run: terraform init -reconfigure
-
-# ==========================================================
-# TERRAFORM VALIDATION
-# ==========================================================
-
-      - name: Terraform Validate
-        working-directory: terraform
-        run: terraform validate
-
-# ==========================================================
-# TERRAFORM PLAN
-# ==========================================================
-
-      - name: Terraform Plan
-        working-directory: terraform
-        env:
-          TF_VAR_public_key: ${{ secrets.VM_PUBLIC_KEY }}
-        run: |
-          terraform plan \
-            -var="public_key=${TF_VAR_public_key}" \
-            -out=tfplan
-
-# ==========================================================
-# TERRAFORM APPLY
-# ==========================================================
-
-      - name: Terraform Apply
-        working-directory: terraform
-        run: |
-          terraform apply \
-            -auto-approve \
-            tfplan
-
-# ==========================================================
-# CAPTURE EC2 INSTANCE INFORMATION
-# ==========================================================
-
-      - name: Capture EC2 Information
-        working-directory: terraform
-        run: |
-          echo "INSTANCE_IP=$(terraform output -raw instance_public_ip)" >> $GITHUB_ENV
-          echo "INSTANCE_DNS=$(terraform output -raw instance_public_dns)" >> $GITHUB_ENV
-
-# ==========================================================
 # CONFIGURE SSH PRIVATE KEY
 # ==========================================================
 
@@ -1557,23 +1727,26 @@ jobs:
           chmod 600 ~/.ssh/aws_key_pair
 
 # ==========================================================
-# WAIT FOR EC2 INSTANCE INITIALIZATION
+# ADD EC2 HOST TO KNOWN HOSTS
 # ==========================================================
 
-      - name: Wait for EC2 Readiness
+      - name: Add EC2 Host to Known Hosts
         run: |
-          chmod +x scripts/wait-for-instance.sh
-          ./scripts/wait-for-instance.sh "$INSTANCE_IP"
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
 # ==========================================================
-# DEPLOY DOCKER CONTAINER
+# DEPLOY UPDATED APPLICATION
+# EXISTING INFRASTRUCTURE REMAINS STABLE
 # ==========================================================
 
-      - name: Deploy Docker Container
+      - name: Deploy Updated Docker Container
         run: |
           ssh -i ~/.ssh/aws_key_pair \
-            -o StrictHostKeyChecking=no \
-            ubuntu@$INSTANCE_IP << EOF
+            ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+
+            echo "======================================="
+            echo "UPDATING APPLICATION CONTAINER"
+            echo "======================================="
 
             until sudo docker info > /dev/null 2>&1
             do
@@ -1581,17 +1754,41 @@ jobs:
               sleep 5
             done
 
-            sudo docker rm -f dynamic-recovery-app || true
+            echo "Pulling latest Docker image..."
 
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app:latest
 
+            echo "Stopping existing container..."
+
+            sudo docker stop dynamic-recovery-app || true
+
+            echo "Removing old container..."
+
+            sudo docker rm dynamic-recovery-app || true
+
+            echo "Starting updated container..."
+
             sudo docker run -d \
               --name dynamic-recovery-app \
-              -p 3000:3000 \
               --restart unless-stopped \
+              -p 3000:3000 \
               ${{ secrets.DOCKER_USERNAME }}/dynamic-recovery-app:latest
 
+            echo "======================================="
+            echo "APPLICATION UPDATE COMPLETE"
+            echo "======================================="
+
           EOF
+
+# ==========================================================
+# VERIFY APPLICATION HEALTH
+# ==========================================================
+
+      - name: Verify Application Health
+        run: |
+          sleep 15
+
+          curl -f https://auemeribetech.com.ng/health
 
 # ==========================================================
 # DEPLOYMENT SUCCESS OUTPUT
@@ -1600,13 +1797,19 @@ jobs:
       - name: Deployment Complete
         run: |
           echo "======================================="
-          echo "DEPLOYMENT SUCCESSFUL"
+          echo "ENTERPRISE DEPLOYMENT SUCCESSFUL"
           echo "======================================="
-          echo "Application URL:"
-          echo "http://$INSTANCE_IP:3000"
+          echo "Production URL:"
+          echo "https://auemeribetech.com.ng"
           echo ""
-          echo "Live Domain:"
-          echo "http://auemeribetech.com.ng:3000"
+          echo "Infrastructure Status:"
+          echo "STABLE"
+          echo ""
+          echo "Deployment Strategy:"
+          echo "APPLICATION-LEVEL UPDATE"
+          echo ""
+          echo "Infrastructure Recreation:"
+          echo "DISABLED"
           echo "======================================="
 ```
 ![Deploy.yml File Creation](screenshots/deploy.yml-creation.png)
@@ -1678,7 +1881,7 @@ jobs:
           -auto-approve \
           -var="public_key=${{ secrets.VM_PUBLIC_KEY }}"
 ```
-![Destroy.yml File Creation](screenshots/destroy.yml-creation.png)
+![Destroy.yml File Creation](screenshots/destroy.yml-file-creation.png)
 ---
 
 # ⚙️ STEP 27 — CREATE ARCHITECTURE DIAGRAM
@@ -1719,7 +1922,7 @@ digraph G {
 
   Terraform [label="Terraform Apply"];
 
-  RemoteState [label="Remote Terraform State\n(S3 + DynamoDB)"];
+  RemoteState [label="Remote Terraform State\n(S3 Native Lockfile)"];
 
   EC2 [label="Dynamic AWS EC2"];
 
@@ -1833,12 +2036,208 @@ Terraform automatically:
 
 ---
 
-# ⚙️ STEP 30 — VERIFY DOMAIN
+# ⚙️ STEP 30 — CONFIGURE NGINX REVERSE PROXY
+
+After Terraform creates the EC2 server and Route53 DNS record, connect to the server and configure Nginx.
+
+---
+## RETRIEVE THE SERVER PUBLIC IP
+
+You can retrieve the public IP using:
+
+```bash
+cd terraform
+
+terraform output instance_public_ip
+```
+![Retieved Server IP](screenshots/retrieval-of-server-ip.png)
+
+## SSH INTO EC2
+
+Run:
+
+```bash
+ssh -i ~/.ssh/id_rsa ubuntu@YOUR_SERVER_PUBLIC_IP
+```
+![Successful VM Login](screenshots/successful-vm-login.png)
+
+
+---
+
+## CREATE NGINX CONFIGURATION
+
+1. Open:
+
+```bash
+sudo nano /etc/nginx/sites-available/app
+```
+
+Paste:
+
+```nginx
+server {
+
+    server_name auemeribetech.com.ng;
+
+    location / {
+
+        proxy_pass http://localhost:3000;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header Upgrade $http_upgrade;
+
+        proxy_set_header Connection 'upgrade';
+
+        proxy_set_header Host $host;
+
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+![Nginx Configuration Creation](screenshots/nginx-configuration-creation.png)
+---
+
+## ENABLE NGINX CONFIGURATION
+
+Run:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/app /etc/nginx/sites-enabled/
+```
+![Enabled Nginx Configuration](screenshots/nginx-configuration-enabled.png)
+---
+
+## REMOVE DEFAULT NGINX CONFIGURATION
+
+Run:
+
+```bash
+sudo rm -f /etc/nginx/sites-enabled/default
+```
+![Default Nginx Configuration Removal](screenshots/default-nginx-configuration-removal.png)
+---
+
+## TEST NGINX CONFIGURATION
+
+Run:
+
+```bash
+sudo nginx -t
+```
+
+Expected:
+
+```text
+syntax is ok
+test is successful
+```
+![Successful Nginx Configuration Testing](screenshots/successful-nginx-configuration-testing.png)
+---
+
+## RESTART NGINX
+
+Run:
+
+```bash
+sudo systemctl restart nginx
+```
+![Nginx Restart](screenshots/nginx-restart.png)
+---
+
+# ⚙️ STEP 31 — ENABLE HTTPS SSL
+
+Now configure HTTPS SSL using Certbot.
+
+---
+
+## GENERATE SSL CERTIFICATE
+
+1. Run:
+
+```bash
+sudo certbot --nginx -d auemeribetech.com.ng
+```
+
+---
+
+## SELECT HTTPS REDIRECTION
+
+When prompted, select:
+
+```text
+2: Redirect HTTP to HTTPS
+```
+
+This forces all traffic to use HTTPS automatically.
+
+![Successful Generation of SSL Certifcate](screenshots/successful-generation-of-ssl-certificate.png)
+---
+
+## VERIFY SSL
+
+Open:
+
+```text
+https://auemeribetech.com.ng
+```
+
+You should now see:
+
+✔ HTTPS enabled  
+✔ Secure SSL lock icon  
+✔ Enterprise reverse proxy architecture  
+✔ Production-grade deployment  
+
+![SSL Verification](screenshots/ssl-verification.png)
+---
+
+## VERIFY SSL RENEWAL
+
+Run:
+
+```bash
+sudo certbot renew --dry-run
+```
+
+Expected:
+
+```text
+Congratulations, all simulated renewals succeeded
+```
+![SSL Verification Renewal](screenshots/ssl-verification-renewal.png)
+---
+
+# ⚙️ STEP 32 — VERIFY LIVE DOMAIN
+
+Open browser:
+
+```text
+https://auemeribetech.com.ng
+```
+
+Test health endpoint:
+
+```bash
+curl https://auemeribetech.com.ng/health
+```
+
+Expected:
+
+```json
+{
+  "status": "OK",
+  "deployment": "PRODUCTION",
+  "infrastructure": "STABLE",
+  "architecture": "ENTERPRISE_CICD"
+}
+```
+# ⚙️ STEP 33 — VERIFY DOMAIN
 
 1. Open browser:
 
 ```text
-http://auemeribetech.com.ng:3000
+https://auemeribetech.com.ng
 ```
 
 2. Expected:
@@ -1846,12 +2245,12 @@ http://auemeribetech.com.ng:3000
 ```text
 🚀 Dynamic Infrastructure Recovery Pipeline Active!
 ```
-![Domain Verification Using Browser](screenshots/domain-verification-using-browser.png)
+![Domain Verification Using Domain Name on Browser](screenshots/domain-verification-using-domain-name.png)
 
 3. Test health endpoint:
 
 ```bash
-curl http://auemeribetech.com.ng:3000/health
+curl https://auemeribetech.com.ng/health
 ```
 
 Expected:
@@ -1862,10 +2261,10 @@ Expected:
   "recovery_mode": "ENABLED"
 }
 ```
-![Health Endpoint Test](screenshots/health-endpoint-test.png)
+![Health Endpoint Test](screenshots/health-endpoint-testing-using-domain-name.png)
 ---
 
-# ⚙️ STEP 31 — CONFIGURE GITHUB
+# ⚙️ STEP 34 — CONFIGURE GITHUB
 
 1. Authenticate GitHub CLI:
 
@@ -1908,7 +2307,7 @@ gh repo create containerized-app-terraform-cicd --public --source=. --remote=ori
 ![Successful GitHub Repository Deployment](screenshots/successful-github-repo-deployment.png)
 ---
 
-# ⚙️ STEP 32 — CONFIGURE GITHUB SECRETS
+# ⚙️ STEP 35 — CONFIGURE GITHUB SECRETS
 
 1. Set AWS Access Key:
 
@@ -1991,7 +2390,7 @@ VM_SSH_KEY
 ![GitHub Configured Secrets](screenshots/gh-configured-secrets.png)
 ---
 
-# ⚙️ STEP 33 — TEST GITHUB ACTIONS PIPELINE
+# ⚙️ STEP 36 — TEST GITHUB ACTIONS PIPELINE
 
 Trigger pipeline:
 
@@ -2018,7 +2417,7 @@ GitHub Actions automatically:
 
 ---
 
-# ⚙️ STEP 34 — VERIFY LIVE DOMAIN
+# ⚙️ STEP 37 — VERIFY LIVE DOMAIN
 
 Open browser:
 
@@ -2034,7 +2433,7 @@ Expected:
 
 ---
 
-# ⚙️ STEP 35 — DESTROY INFRASTRUCTURE
+# ⚙️ STEP 38 — DESTROY INFRASTRUCTURE
 
 Navigate:
 
@@ -2091,7 +2490,7 @@ GitHub Actions automatically:
 ![Infrastructure Reactivation](screenshots/infrastructure-reactivation.png)
 ---
 
-# ⚙️ STEP 37 — VERIFY AUTOMATIC DOMAIN RECOVERY
+# ⚙️ STEP 39 — VERIFY AUTOMATIC DOMAIN RECOVERY
 
 Open browser:
 
@@ -2110,12 +2509,17 @@ Expected:
 # 🧠 TYPICAL RECOVERY TIME
 
 ```text
-EC2 Creation             → 30–90 seconds
-Docker Installation      → 30–120 seconds
-GitHub Deployment        → 20–60 seconds
-Route53 DNS Update       → 10–60 seconds
-DNS Propagation          → 30 seconds – 5 minutes
-Fully Live               → ~2–6 minutes
+Docker Build           → 20–60 seconds
+
+Docker Push            → 10–30 seconds
+
+SSH Deployment         → 5–15 seconds
+
+Container Replacement  → 5–15 seconds
+
+Application Restart    → 2–10 seconds
+
+Fully Live             → ~1–2 minutes
 ```
 
 ---
