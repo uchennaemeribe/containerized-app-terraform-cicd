@@ -2371,7 +2371,13 @@ gh secret set VM_SSH_KEY < ~/.ssh/id_rsa
 ```
 ![EC2 Private SSH Key Configuration](screenshots/gh-configuration-vm-private-key.png)
 
-7. Verify secrets:
+7. Set EC2 Host:
+```bash
+gh secret set EC2_HOST
+```
+![Domain Name Configuration on GitHub Secrets](screenshots/gh-secret-configuration-for-ec2-host.png)
+
+8. Verify secrets:
 
 ```bash
 gh secret list
@@ -2387,7 +2393,7 @@ DOCKER_PASSWORD
 VM_PUBLIC_KEY
 VM_SSH_KEY
 ```
-![GitHub Configured Secrets](screenshots/gh-configured-secrets.png)
+![GitHub Configured Secrets](screenshots/gh-configured-secrets-list.png)
 ---
 
 # ⚙️ STEP 36 — TEST GITHUB ACTIONS PIPELINE
