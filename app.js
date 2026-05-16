@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
   res.send(`
     <html>
       <head>
-        <title>Enterprise CI/CD Recovery Pipeline Designed By Group 4 and Inspired By Mrs Mary Ajayi</title>
+        <title>Enterprise CI/CD Recovery Pipeline</title>
 
         <style>
           body {
@@ -67,7 +67,7 @@ app.get('/', (req, res) => {
         <div class="container">
 
           <h1>
-            🚀 Enterprise CI/CD Recovery Pipeline Active
+            🚀 Enterprise CI/CD Recovery Pipeline Active Designed By Group 4 and Inspired By Mrs Mary Ajayi
           </h1>
 
           <p>
